@@ -1,3 +1,5 @@
+# GitHub: https://github.com/piccoripico/Anki_Addon/
+
 from aqt import gui_hooks, mw
 from aqt.qt import QAction
 from aqt.editor import EditorWebView
