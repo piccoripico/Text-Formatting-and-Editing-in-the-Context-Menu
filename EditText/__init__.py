@@ -21,7 +21,7 @@ def build_selection_menu(web_instance, menu):
         ("Strikethrough", "strikeThrough", None),
         ("Bold", "bold", None),
         ("Italic", "italic", None),
-        ("Underlined", "underline", None),
+        ("Underline", "underline", None),
         ("Reset", "removeFormat", None),
     ]
 
