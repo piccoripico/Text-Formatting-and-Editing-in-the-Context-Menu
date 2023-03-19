@@ -1,2 +1,2 @@
 # Anki_Addon
-EditText: To add some items in the context menus for text editing. That's all.
+EditText: This is simply to add some items for text editing to the context menu. There is nothing else in particular.
