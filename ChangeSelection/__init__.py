@@ -16,12 +16,12 @@ def build_selection_menu(web_instance, menu):
     selection_menu = menu.addMenu("Change Selection")
 
     actions = [
-        ("Make Red", "foreColor", "red"),
-        ("Make Subscript", "subscript", None),
-        ("Make Strikethrough", "strikeThrough", None),
-        ("Make Bold", "bold", None),
-        ("Make Italic", "italic", None),
-        ("Make Underlined", "underline", None),
+        ("Red", "foreColor", "red"),
+        ("Subscript", "subscript", None),
+        ("Strikethrough", "strikeThrough", None),
+        ("Bold", "bold", None),
+        ("Italic", "italic", None),
+        ("Underlined", "underline", None),
         ("Reset", "removeFormat", None),
     ]
 
