@@ -1,6 +1,7 @@
 ## Text formatting items in the context menu configuration
 
-This addon allows you to format and edit the selected text in the context menu in Anki. You can enable or disable the "Format & Edit" menu items in the different context menus by modifying the `config.json` file directly if needed.
+This addon allows you to format and edit the selected text in the context menu in Anki.
+GitHub: https://github.com/piccoripico/Anki_Addon/
 
 ### Configuration Options
 
