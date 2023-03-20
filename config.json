@@ -1,0 +1,8 @@
+{
+    "editor": {
+        "enabled": true
+    },
+    "reviewer": {
+        "enabled": false
+    }
+}
