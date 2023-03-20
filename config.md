@@ -3,6 +3,8 @@
 This addon is to format and edit texts by clicking items in the context menu in Anki.
 GitHub: https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu
 
+<img src="https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu/raw/main/ScreenShotonRightClick.png">
+
 ### Configuration Options
 
 Set the "enabled" value to `true` or `false` to enable or disable the items in each context menu.
