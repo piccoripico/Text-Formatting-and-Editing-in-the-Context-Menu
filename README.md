@@ -1,1 +1,1 @@
-> config.md
+[config.md](./config.md)
