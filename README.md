@@ -1,1 +1,1 @@
-[config.md](./config.md)
+For details: [config.md](./config.md)
