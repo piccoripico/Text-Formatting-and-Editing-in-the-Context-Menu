@@ -1,4 +1,4 @@
-## Text formatting & editing items in the context menu configuration
+## Text Formatting and Editing in the Context Menu
 
 This addon allows you to format and edit the selected text in the context menu in Anki.
 GitHub: https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu
