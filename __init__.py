@@ -1,14 +1,12 @@
 # GitHub: https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu/
 
-import json
+import json, datetime
 from aqt import gui_hooks, mw
 from aqt.qt import QAction
 from aqt.editor import EditorWebView
 from aqt.reviewer import Reviewer
 from aqt.utils import showInfo, getText
 from PyQt5.QtWidgets import QInputDialog, QFontDialog, QApplication, QMessageBox
-
-import datetime
 
 def getConfig():
     return mw.addonManager.getConfig(__name__)
@@ -233,7 +231,7 @@ def build_selection_menu(web_instance, menu, config):
 
             # Insert link
         action = QAction("Insert Link", menu)
-        action.triggered.connect(lambda _, w=web_instance: insert_link(w, getText("URL:")[0]))
+        action.triggered.connect(lambda _, w=web_instance: insert_link(w, getText("URL (if nothing selected, paste as text):")[0]))
         insert_menu.addAction(action)
 
             # Insert image
@@ -243,7 +241,7 @@ def build_selection_menu(web_instance, menu, config):
                 web_instance.eval(js_code.format(url=url))
 
         action = QAction("Insert Image", menu)
-        action.triggered.connect(lambda _, w=web_instance: insert_image(w, getText("Image URL:")[0]))
+        action.triggered.connect(lambda _, w=web_instance: insert_image(w, getText("Image URL or filename in your collection.media folder:")[0]))
         insert_menu.addAction(action)
         """
             # Insert table
@@ -279,7 +277,7 @@ def build_selection_menu(web_instance, menu, config):
         insert_menu.addAction(action)
 
             # Special Characters family
-        special_characters_menu = insert_menu.addMenu("Insert Special Characters")
+        special_characters_menu = insert_menu.addMenu("Insert Special Character")
         special_characters_actions = [
             ("Em Dash (—)", "—"),
             ("En Dash (–)", "–"),
