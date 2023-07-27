@@ -6,7 +6,6 @@ This addon is to format and edit texts by clicking items in the context menu in 
 GitHub: https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu
 
 <img src="https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu/raw/main/ScreenShotonRightClick.png">
-<img src="https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu/raw/main/ConfigWindow.JPG">
 
 ### Config options
 
@@ -18,6 +17,7 @@ In the addon config window, check or uncheck the following items to your liking:
 - Show 'Format / Edit' in Reviewer context menu. (This option may be useful if you use a must-have addon 'Edit Field During Review'. This is just why I made this addon.)
 
 2. Quick Access Items
+<img src="https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu/raw/main/ConfigWindow.JPG">
 
 ### Note
 
