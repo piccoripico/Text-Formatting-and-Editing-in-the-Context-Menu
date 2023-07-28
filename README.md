@@ -27,5 +27,6 @@ This addon uses a deprecated Javascript function "document.execCommand". Officia
 
 2023/07/27
 
-- Added config window 
+- Added config window
+- Added Quick Access feature
 - Fixed some bugs
