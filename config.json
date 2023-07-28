@@ -3,6 +3,12 @@
         "enabled": true
     },
     "reviewer": {
-        "enabled": false
-    }
+        "enabled": true
+    },
+    "selected_quick_access_items": [
+        "Subscript",
+        "Red",
+        "YYYY-MM-DD HH:mm"
+    ],
+    "quick_access_position": false
 }

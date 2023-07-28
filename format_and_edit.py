@@ -113,17 +113,31 @@ def build_selection_menu(web_instance, menu, config):
         quick_access_items = config.get("selected_quick_access_items", []) 
         basic_actions = [item for item in all_quick_access_items if item[0] in quick_access_items]
 
-        for action_name, command, value in basic_actions:
-            action = QAction(action_name, menu)
-            if value == "TIME":
-                action.triggered.connect(lambda _, w=web_instance, c=command: insert_date_and_time(w, c))
-                selection_menu.addAction(action)               
-            else:
-                action.triggered.connect(lambda _, w=web_instance, c=command, v=value: exec_command(w, c, v))
-                selection_menu.addAction(action)
-
+            ## Quick Access on the first level or inside Format / Edit of the context menu
+        if config.get("quick_access_position") == False:
+            for action_name, command, value in basic_actions:
+                action = QAction(action_name, menu)
+                if value == "TIME":
+                    action.triggered.connect(lambda _, w=web_instance, c=command: insert_date_and_time(w, c))
+                    selection_menu.addAction(action)               
+                else:
+                    action.triggered.connect(lambda _, w=web_instance, c=command, v=value: exec_command(w, c, v))
+                    selection_menu.addAction(action)
         # (Separator line)
-        selection_menu.addSeparator()
+            selection_menu.addSeparator()
+        else:
+        # (Separator line)
+            menu.addSeparator()
+            for action_name, command, value in basic_actions:
+                action = QAction(action_name, menu)
+                if value == "TIME":
+                    action.triggered.connect(lambda _, w=web_instance, c=command: insert_date_and_time(w, c))
+                    menu.addAction(action)               
+                else:
+                    action.triggered.connect(lambda _, w=web_instance, c=command, v=value: exec_command(w, c, v))
+                    menu.addAction(action)
+        # (Separator line)
+            menu.addSeparator()
 
         # Text Styling family
         text_styling_menu = selection_menu.addMenu("Text Styling")

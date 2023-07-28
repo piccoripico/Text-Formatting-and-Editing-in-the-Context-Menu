@@ -15,9 +15,11 @@ class ConfigUI(QDialog):
         self.layout = QVBoxLayout(self)
         self.box1 = QGroupBox("(1) Show 'Format / Edit'")
         self.box2 = QGroupBox("(2) Quick Access Items")
+        self.boxPos = QGroupBox("(3) Quick Access Position")
         self.layout1 = QHBoxLayout()
         self.layout2 = QHBoxLayout()
         self.layout3 = QHBoxLayout()
+        self.layoutPos = QHBoxLayout()
         self.boxB = QGroupBox("Text Styling")
         self.boxC = QGroupBox("Text Color")
         self.boxD = QGroupBox("Font Size")
@@ -110,6 +112,11 @@ class ConfigUI(QDialog):
             self.clear_format_checkboxes.append(checkbox)
         self.layoutG.addStretch(1)
 
+        # Quick Access position
+        self.quick_access_position_checkbox = QCheckBox("Display the Quick Access items on the first level of the context menu")
+        self.quick_access_position_checkbox.setChecked(self.config.get('quick_access_position', False))
+        self.layoutPos.addWidget(self.quick_access_position_checkbox)
+
         # OK and Cancel buttons
         self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.button_box.accepted.connect(self.save_config)
@@ -135,9 +142,11 @@ class ConfigUI(QDialog):
 
         self.box1.setLayout(self.layout1)
         self.box2.setLayout(self.layout2)
+        self.boxPos.setLayout(self.layoutPos)
 
         self.layout.addWidget(self.box1)
         self.layout.addWidget(self.box2)
+        self.layout.addWidget(self.boxPos)
         self.layout.addLayout(self.layout3)
 
         self.setLayout(self.layout)
@@ -149,6 +158,7 @@ class ConfigUI(QDialog):
         self.config['editor']['enabled'] = self.editor_checkbox.isChecked()
         self.config['reviewer']['enabled'] = self.reviewer_checkbox.isChecked()
         self.config['selected_quick_access_items'] = [checkbox.text() for checkbox in self.quick_access_checkboxes if checkbox.isChecked()]
+        self.config['quick_access_position'] = self.quick_access_position_checkbox.isChecked()
         self.addon_parent.addonManager.writeConfig(__name__, self.config)
         self.accept()
 
