@@ -26,7 +26,7 @@ This addon uses a deprecated Javascript function "document.execCommand". Officia
 ### Changelog
 
 2023-07-27
-- Added config window
+- Added config window (after this addon is updated, please restart Anki.)
 - Added Quick Access feature
 - Fixed some bugs
 
