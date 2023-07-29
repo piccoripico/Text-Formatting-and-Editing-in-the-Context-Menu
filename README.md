@@ -12,8 +12,8 @@ GitHub: https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Contex
 In the config window of this addon, check or uncheck the following items to your liking:
 
 1. Show 'Format / Edit'
-  - Show 'Format / Edit' in Editor context menu.
-  - Show 'Format / Edit' in Reviewer context menu. (This option may be useful if you use a must-have addon 'Edit Field During Review'. This is just why I made this addon.)
+- Show 'Format / Edit' in Editor context menu.
+- Show 'Format / Edit' in Reviewer context menu. (This option may be useful if you use a must-have addon 'Edit Field During Review'. This is just why I made this addon.)
 2. Quick Access Items (see the below image)
 3. Display the Quick Access items on the first level of the context menu
 <img src="https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu/raw/main/ConfigWindow.JPG">
