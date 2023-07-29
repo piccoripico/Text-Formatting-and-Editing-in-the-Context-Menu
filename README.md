@@ -25,10 +25,10 @@ This addon uses a deprecated Javascript function "document.execCommand". Officia
 
 ### Changelog
 
-2023/07/27
+2023-07-27
 - Added config window
 - Added Quick Access feature
 - Fixed some bugs
 
-2023/07/29
+2023-07-29
 - Added option to display the Quick Access items on the first level of the context menu
