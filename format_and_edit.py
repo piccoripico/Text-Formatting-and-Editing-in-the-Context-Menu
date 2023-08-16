@@ -1,4 +1,4 @@
-# Note: This addon uses a deprecated Javascript function "document.execCommand". Official changes to Javascript may affect this addon in the future.
+# Note: This addon uses a deprecated Javascript function "document.execCommand". Official updates to Javascript may affect this addon in the future.
 
 import json, datetime
 from aqt import gui_hooks, mw
