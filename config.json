@@ -10,5 +10,8 @@
         "Red",
         "YYYY-MM-DD HH:mm"
     ],
-    "quick_access_position": false
+    "quick_access_position": false,
+    "user_words_flag": false,
+    "user_words": [],
+    "user_words_position": false
 }

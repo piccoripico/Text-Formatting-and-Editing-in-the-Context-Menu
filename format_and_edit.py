@@ -108,24 +108,40 @@ def build_selection_menu(web_instance, menu, config):
         selection_menu = menu.addMenu("Format / Edit")
         config = getConfig()
 
+        if config.get("user_words_flag") == True:
+        # user words
+            user_words = config.get("user_words", [])
+            if user_words:
+                user_words_actions = [(word, word) for word in user_words]
+
+            ## user words on the first level or inside Format / Edit of the context menu
+                if config.get("user_words_position") == True:
+        # (Separator line)
+                    menu.addSeparator()
+                ### User Words
+                    for action_name, character in user_words_actions:
+                        action = QAction(action_name, menu)
+                        action.triggered.connect(lambda _, w=web_instance, c=character: insert_special_character(w, c))
+                        menu.addAction(action)
+        # (Separator line)
+                    menu.addSeparator()
+                else:
+                ### User Words
+                    user_words_menu = selection_menu.addMenu("User Words")
+                    for action_name, character in user_words_actions:
+                        action = QAction(action_name, menu)
+                        action.triggered.connect(lambda _, w=web_instance, c=character: insert_special_character(w, c))
+                        user_words_menu.addAction(action)
+        # (Separator line)
+                    selection_menu.addSeparator()
+
         ### All items listed below ###
         # Quick Access
         quick_access_items = config.get("selected_quick_access_items", []) 
         basic_actions = [item for item in all_quick_access_items if item[0] in quick_access_items]
 
             ## Quick Access on the first level or inside Format / Edit of the context menu
-        if config.get("quick_access_position") == False:
-            for action_name, command, value in basic_actions:
-                action = QAction(action_name, menu)
-                if value == "TIME":
-                    action.triggered.connect(lambda _, w=web_instance, c=command: insert_date_and_time(w, c))
-                    selection_menu.addAction(action)               
-                else:
-                    action.triggered.connect(lambda _, w=web_instance, c=command, v=value: exec_command(w, c, v))
-                    selection_menu.addAction(action)
-        # (Separator line)
-            selection_menu.addSeparator()
-        else:
+        if config.get("quick_access_position") == True:
         # (Separator line)
             menu.addSeparator()
             for action_name, command, value in basic_actions:
@@ -138,6 +154,19 @@ def build_selection_menu(web_instance, menu, config):
                     menu.addAction(action)
         # (Separator line)
             menu.addSeparator()
+        else:
+        # (Separator line)
+            selection_menu.addSeparator()
+            for action_name, command, value in basic_actions:
+                action = QAction(action_name, menu)
+                if value == "TIME":
+                    action.triggered.connect(lambda _, w=web_instance, c=command: insert_date_and_time(w, c))
+                    selection_menu.addAction(action)               
+                else:
+                    action.triggered.connect(lambda _, w=web_instance, c=command, v=value: exec_command(w, c, v))
+                    selection_menu.addAction(action)
+        # (Separator line)
+            selection_menu.addSeparator()
 
         # Text Styling family
         text_styling_menu = selection_menu.addMenu("Text Styling")
