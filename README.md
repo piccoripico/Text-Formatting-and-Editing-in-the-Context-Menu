@@ -1,7 +1,7 @@
 ## Text Formatting and Editing in the Context Menu
-> Available on AnkiWeb: https://ankiweb.net/shared/info/2143302836
+> Available on AnkiWeb: <a href="https://ankiweb.net/shared/info/2143302836">https://ankiweb.net/shared/info/2143302836</a>
 
-> GitHub: https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu
+> GitHub: <a href="https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu">https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu</a>
 
 This addon aims to format and edit texts by clicking items in the context menu (right-click menu) in Anki.
 <img src="https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu/raw/main/ContextMenu.JPG">
@@ -24,7 +24,7 @@ This addon aims to format and edit texts by clicking items in the context menu (
 - General Tab
   - (1) Show 'Format / Edit'
     - Show 'Format / Edit' in Editor context menu.
-    - Show 'Format / Edit' in Reviewer context menu. (This option may be useful if you rely on the incredibly wonderful addon 'Edit Field During Review.' This is the reason why I created this addon.)
+    - Show 'Format / Edit' in Reviewer context menu. (This option may be useful if you rely on the incredibly wonderful addon '<a href="https://ankiweb.net/shared/info/1020366288">Edit Field During Review</a>' or '<a href="https://ankiweb.net/shared/info/385888438">Edit Field During Review (Cloze)</a>.' This is the reason why I created this addon.)
   - (2) Quick Access Items (as listed in the image below)
   - (3) Display the Quick Access items on the first level of the context menu
 <img src="https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu/raw/main/ConfigWindowGeneral.JPG">
