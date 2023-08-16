@@ -245,13 +245,13 @@ def build_selection_menu(web_instance, menu, config):
             action = QAction(action_name, menu)
             action.triggered.connect(lambda _, w=web_instance, c=character: insert_special_character(w, c))
             special_characters_menu.addAction(action)
-
+        '''
         special_characters_sub_menu = special_characters_menu.addMenu("<3")
         for action_name, character in special_characters_sub_actions:
             action = QAction(action_name, menu)
             action.triggered.connect(lambda _, w=web_instance, c=character: insert_special_character(w, c))
             special_characters_sub_menu.addAction(action)
-
+        '''
         # (Separator line)
         selection_menu.addSeparator()
 
@@ -353,7 +353,7 @@ special_characters_actions = [
     ("Pound (£)", "£"),
     ("Cent (¢)", "¢"),
 ]
-
+'''
 special_characters_sub_actions = [
     ("♥","♥"),
     ("♡","♡"),
@@ -379,7 +379,7 @@ special_characters_sub_actions = [
     ("ღ","ღ"),
     ("ও","ও"),
 ]
-
+'''
 edit_actions = [
     ("Cut", "cut", None),
     ("Copy", "copy", None),
