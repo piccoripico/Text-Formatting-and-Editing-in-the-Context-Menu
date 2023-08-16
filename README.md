@@ -34,7 +34,7 @@ This addon aims to format and edit texts by clicking items in the context menu (
   - Word list:
     - Add/Edit/Remove a single word.
     - Move selected item up/down.
-    - Import/Export a list (Please not that the file needs to have a line break after each word.)
+    - Import/Export a list (Please note that the file needs to have a line break after each word.)
   - Display the added words on the first level of the context menu
 <img src="https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu/raw/main/ConfigWindowUserWords.JPG">
 
