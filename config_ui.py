@@ -42,7 +42,7 @@ class ConfigUI(QDialog):
         self.layoutA.addWidget(self.editor_checkbox)
 
                 ## Reviewer checkbox
-        self.reviewer_checkbox = QCheckBox("Show 'Format / Edit' in Reviewer context menu")
+        self.reviewer_checkbox = QCheckBox("Show 'Format / Edit' in Reviewer context menu (Available with the add-on 'Edit Field During Review (Cloze)', excluding some features.)")
         self.reviewer_checkbox.setChecked(self.config.get('reviewer', {}).get('enabled', True))
         self.layoutA.addWidget(self.reviewer_checkbox)
 
