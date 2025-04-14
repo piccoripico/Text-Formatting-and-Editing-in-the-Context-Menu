@@ -44,6 +44,8 @@ This addon aims to format and edit texts by clicking items in the context menu (
 
 ### Changelog
 
+- 2025-04-15
+  - Fixed an issue where the config window would not open
 - 2023-07-27
   - Added config window (after this addon is updated, please restart Anki.)
   - Added Quick Access feature
