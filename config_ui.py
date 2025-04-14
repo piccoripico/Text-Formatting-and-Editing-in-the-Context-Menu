@@ -2,6 +2,20 @@ from aqt import mw
 from aqt.qt import *
 from .format_and_edit import *
 
+# PyQt5 and PyQt6 version compatibility support
+try:
+    # PyQt6
+    OK_BUTTON = QDialogButtonBox.StandardButton.Ok
+    CANCEL_BUTTON = QDialogButtonBox.StandardButton.Cancel
+    def exec_dialog(dialog):
+        return dialog.exec()
+except AttributeError:
+    # PyQt5
+    OK_BUTTON = QDialogButtonBox.Ok
+    CANCEL_BUTTON = QDialogButtonBox.Cancel
+    def exec_dialog(dialog):
+        return dialog.exec_()
+
 class ConfigUI(QDialog):
     def __init__(self, addon_parent):
         super(ConfigUI, self).__init__(addon_parent)
@@ -184,7 +198,7 @@ class ConfigUI(QDialog):
 
         ### OK and Cancel buttons ###
         self.layoutOKCancel = QHBoxLayout()
-        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.button_box = QDialogButtonBox(OK_BUTTON | CANCEL_BUTTON)   # PyQt5 and PyQt6 compatibility
         self.button_box.accepted.connect(self.save_config)
         self.button_box.rejected.connect(self.reject)
 
@@ -304,6 +318,6 @@ class ConfigUI(QDialog):
 
 def open_config_dialog():
     dialog = ConfigUI(mw)
-    dialog.exec_()
+    exec_dialog(dialog)   # PyQt5 and PyQt6 compatibility
 
 mw.addonManager.setConfigAction(__name__, open_config_dialog)
