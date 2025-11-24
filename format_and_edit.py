@@ -1,5 +1,3 @@
-# Note: This addon uses a deprecated Javascript function "document.execCommand". Official updates to Javascript may affect this addon in the future.
-
 import json, datetime
 from aqt import gui_hooks, mw
 from aqt.qt import *
@@ -8,93 +6,375 @@ from aqt.reviewer import Reviewer
 from aqt.utils import showInfo, getText
 from PyQt5.QtWidgets import QInputDialog, QFontDialog, QApplication, QMessageBox, QFileDialog
 
+
 def getConfig():
     return mw.addonManager.getConfig(__name__)
 
-def exec_command(web_instance, command, value=None):
-    if value:
-        cmd = f"document.execCommand('{command}', false, '{value}');"
-    else:
-        cmd = f"document.execCommand('{command}', false, null);"
-    web_instance.eval(cmd)
 
-def exec_command_with_js(web_instance, js_code):
-    web_instance.eval(js_code)
+FORMAT_EDIT_HELPER = r'''
+(() => {
+    if (window.formatAndEditHelper) {
+        return;
+    }
+
+    const FONT_SIZE_MAP = {
+        "1": "0.67em",
+        "2": "0.83em",
+        "3": "1em",
+        "4": "1.17em",
+        "5": "1.5em",
+        "6": "2em",
+        "7": "3em",
+    };
+
+    const history = {
+        snapshots: [],
+        index: -1,
+    };
+
+    const getSelectionRange = () => {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) {
+            return null;
+        }
+        return selection.getRangeAt(0);
+    };
+
+    const saveSnapshot = () => {
+        const html = document.body.innerHTML;
+        if (history.index >= 0 && history.snapshots[history.index] === html) {
+            return;
+        }
+        history.snapshots = history.snapshots.slice(0, history.index + 1);
+        history.snapshots.push(html);
+        history.index = history.snapshots.length - 1;
+    };
+
+    const restoreSnapshot = (delta) => {
+        const nextIndex = history.index + delta;
+        if (nextIndex < 0 || nextIndex >= history.snapshots.length) {
+            return;
+        }
+        history.index = nextIndex;
+        document.body.innerHTML = history.snapshots[history.index];
+    };
+
+    const wrapRange = (range, wrapper) => {
+        const contents = range.extractContents();
+        wrapper.appendChild(contents);
+        range.insertNode(wrapper);
+        range.setStartAfter(wrapper);
+        range.collapse(true);
+    };
+
+    const ensureBlockElement = (range) => {
+        const blockSelector = "p, div, li, blockquote";
+        const startContainer = range.startContainer;
+        if (startContainer.nodeType === Node.ELEMENT_NODE && startContainer.matches(blockSelector)) {
+            return startContainer;
+        }
+        const closestBlock = startContainer.nodeType === Node.TEXT_NODE
+            ? startContainer.parentElement.closest(blockSelector)
+            : startContainer.closest(blockSelector);
+        if (closestBlock) {
+            return closestBlock;
+        }
+        const wrapper = document.createElement("div");
+        wrapRange(range, wrapper);
+        return wrapper;
+    };
+
+    const adjustIndent = (range, delta) => {
+        const block = ensureBlockElement(range);
+        const current = parseFloat(block.style.marginLeft || "0");
+        const next = Math.max(0, current + delta);
+        block.style.marginLeft = next ? `${next}px` : "";
+    };
+
+    const applyAlignment = (range, alignment) => {
+        const block = ensureBlockElement(range);
+        block.style.textAlign = alignment;
+    };
+
+    const listFromSelection = (range, tagName) => {
+        const text = range.toString();
+        const list = document.createElement(tagName);
+        const items = text ? text.split(/\n+/) : [""];
+        items.forEach((item) => {
+            const li = document.createElement("li");
+            li.textContent = item;
+            list.appendChild(li);
+        });
+        range.deleteContents();
+        range.insertNode(list);
+        range.setStart(list, list.childNodes.length);
+        range.collapse(false);
+    };
+
+    const removeFormatting = (range) => {
+        const plainText = range.toString();
+        range.deleteContents();
+        range.insertNode(document.createTextNode(plainText));
+        range.collapse(false);
+    };
+
+    const writeToClipboard = async (text) => {
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch (err) {
+            console.warn("Clipboard write failed", err);
+        }
+    };
+
+    const handleCopy = (range, shouldCut = false) => {
+        const text = range.toString();
+        writeToClipboard(text);
+        if (shouldCut) {
+            range.deleteContents();
+        }
+    };
+
+    const handlePaste = async (range) => {
+        if (!navigator.clipboard?.readText) {
+            return;
+        }
+        const text = await navigator.clipboard.readText();
+        range.deleteContents();
+        range.insertNode(document.createTextNode(text));
+        range.collapse(false);
+    };
+
+    const applyCommand = async (command, value = null) => {
+        if (command === "undo") {
+            restoreSnapshot(-1);
+            return;
+        }
+        if (command === "redo") {
+            restoreSnapshot(1);
+            return;
+        }
+
+        const range = getSelectionRange();
+        if (!range) {
+            return;
+        }
+
+        saveSnapshot();
+
+        switch (command) {
+            case "bold":
+                wrapRange(range, document.createElement("strong"));
+                break;
+            case "italic":
+                wrapRange(range, document.createElement("em"));
+                break;
+            case "underline":
+                wrapRange(range, document.createElement("u"));
+                break;
+            case "strikeThrough":
+                wrapRange(range, document.createElement("s"));
+                break;
+            case "superscript":
+                wrapRange(range, document.createElement("sup"));
+                break;
+            case "subscript":
+                wrapRange(range, document.createElement("sub"));
+                break;
+            case "foreColor": {
+                const span = document.createElement("span");
+                span.style.color = value || "";
+                wrapRange(range, span);
+                break;
+            }
+            case "backColor": {
+                const span = document.createElement("span");
+                span.style.backgroundColor = value || "";
+                wrapRange(range, span);
+                break;
+            }
+            case "fontSize": {
+                const span = document.createElement("span");
+                span.style.fontSize = FONT_SIZE_MAP[value] || value || "1em";
+                wrapRange(range, span);
+                break;
+            }
+            case "fontName": {
+                const span = document.createElement("span");
+                span.style.fontFamily = value || "";
+                wrapRange(range, span);
+                break;
+            }
+            case "justifyLeft":
+                applyAlignment(range, "left");
+                break;
+            case "justifyCenter":
+                applyAlignment(range, "center");
+                break;
+            case "justifyRight":
+                applyAlignment(range, "right");
+                break;
+            case "justifyFull":
+                applyAlignment(range, "justify");
+                break;
+            case "indent":
+                adjustIndent(range, 20);
+                break;
+            case "outdent":
+                adjustIndent(range, -20);
+                break;
+            case "insertUnorderedList":
+                listFromSelection(range, "ul");
+                break;
+            case "insertOrderedList":
+                listFromSelection(range, "ol");
+                break;
+            case "insertHorizontalRule": {
+                const hr = document.createElement("hr");
+                range.collapse(false);
+                range.insertNode(hr);
+                range.setStartAfter(hr);
+                range.collapse(true);
+                break;
+            }
+            case "insertText":
+                range.deleteContents();
+                range.insertNode(document.createTextNode(value || ""));
+                range.collapse(false);
+                break;
+            case "insertHTML": {
+                const template = document.createElement("template");
+                template.innerHTML = value || "";
+                const fragment = template.content.cloneNode(true);
+                range.deleteContents();
+                range.insertNode(fragment);
+                range.collapse(false);
+                break;
+            }
+            case "createLink": {
+                if (!value) break;
+                const anchor = document.createElement("a");
+                anchor.href = value;
+                anchor.textContent = range.collapsed ? value : range.toString();
+                wrapRange(range, anchor);
+                break;
+            }
+            case "insertImage": {
+                if (!value) break;
+                const img = document.createElement("img");
+                img.src = value;
+                img.alt = "";
+                img.style.maxWidth = "100%";
+                range.deleteContents();
+                range.insertNode(img);
+                range.setStartAfter(img);
+                range.collapse(true);
+                break;
+            }
+            case "formatBlock": {
+                const tag = value || "div";
+                const block = document.createElement(tag);
+                wrapRange(range, block);
+                break;
+            }
+            case "cut":
+                handleCopy(range, true);
+                break;
+            case "copy":
+                handleCopy(range, false);
+                break;
+            case "paste":
+                await handlePaste(range);
+                break;
+            case "selectAll": {
+                const fullRange = document.createRange();
+                fullRange.selectNodeContents(document.body);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(fullRange);
+                break;
+            }
+            case "removeFormat":
+                removeFormatting(range);
+                break;
+            default:
+                console.warn("Unknown command", command);
+        }
+
+        saveSnapshot();
+    };
+
+    saveSnapshot();
+    window.formatAndEditHelper = {
+        applyCommand,
+    };
+})();
+'''
+
+
+def ensure_helper(web_instance):
+    web_instance.eval(FORMAT_EDIT_HELPER)
+
+
+def exec_command(web_instance, command, value=None):
+    ensure_helper(web_instance)
+    value_json = json.dumps(value) if value is not None else "null"
+    web_instance.eval(f"window.formatAndEditHelper.applyCommand({json.dumps(command)}, {value_json});")
+
 
 def change_font_family(web_instance):
     font, ok = QFontDialog.getFont()
     if ok:
         family = font.family()
-        cmd = f"document.execCommand('fontName', false, '{family}');"
-        web_instance.eval(cmd)
+        exec_command(web_instance, "fontName", family)
+
 
 def insert_special_character(web_instance, character):
-    cmd = f"document.execCommand('insertText', false, '{character}');"
-    web_instance.eval(cmd)
+    exec_command(web_instance, "insertText", character)
+
 
 def insert_link(web_instance, url):
     # unavailable if web_instance = reviewer.web
     if url:
-        js_code = "document.execCommand('createLink', false, '{url}');"
-        web_instance.eval(js_code.format(url=url))
+        exec_command(web_instance, "createLink", url)
+
 
 def insert_image(web_instance, url):
     # unavailable if web_instance = reviewer.web
     if url:
-        js_code = "document.execCommand('insertImage', false, '{url}');"
-        web_instance.eval(js_code.format(url=url))
+        exec_command(web_instance, "insertImage", url)
+
 
 def insert_date_and_time(web_instance, format_str):
     now = datetime.datetime.now()
     formatted_date = now.strftime(format_str)
-    js_code = "document.execCommand('insertText', false, '{formatted_date}');"
-    web_instance.eval(js_code.format(formatted_date=formatted_date))
+    exec_command(web_instance, "insertText", formatted_date)
 
-''' # unexpected behavior
-def paste_plain_text(web_instance):
-    clipboard = QApplication.clipboard()
-    plain_text = clipboard.text()
-    js_code = f"""
-        var plainText = {json.dumps(plain_text)};
-        var range;
-        var sel = window.getSelection();
-        if (sel.getRangeAt && sel.rangeCount) {{
-            range = sel.getRangeAt(0);
-            range.deleteContents();
-            var textNode = document.createTextNode(plainText);
-            range.insertNode(textNode);
-            range.setStartAfter(textNode);
-            sel.removeAllRanges();
-            sel.addRange(range);
-        }}
-    """
-    exec_command_with_js(web_instance, js_code)
-'''
 
 def paste_html(web_instance):
     clipboard = QApplication.clipboard()
     mime_data = clipboard.mimeData()
     if mime_data.hasHtml():
         html_content = mime_data.html()
-        js_code = f'document.execCommand("insertHTML", false, {json.dumps(html_content)});'
-        web_instance.eval(js_code)
+        exec_command(web_instance, "insertHTML", html_content)
+
 
 def count_words_characters(web_instance):
     js_code = """
-        (function() {{
+        (function() {
             const selection = window.getSelection();
             const text = selection.toString().trim();
-            if (text.length === 0) {{
+            if (text.length === 0) {
                 return [0, 0, 0];
-            }} else {{
+            } else {
                 const words = text.split(/\s+/).length;
                 const characters_including_spaces = text.length;
                 const characters_excluding_spaces = text.replace(/\s+/g, '').length;
                 return [words, characters_including_spaces, characters_excluding_spaces];
-            }}
-        }})()
+            }
+        })()
     """
     result = web_instance.page().runJavaScript(js_code, on_done)
+
 
 def on_done(result):
     if result:
@@ -103,8 +383,10 @@ def on_done(result):
     else:
         QMessageBox.information(None, "Word and Character Count", "No text selected.")
 
+
 def build_selection_menu(web_instance, menu, config):
     if config["enabled"]:
+        ensure_helper(web_instance)
         selection_menu = menu.addMenu("Format / Edit")
         config = getConfig()
 
@@ -137,7 +419,7 @@ def build_selection_menu(web_instance, menu, config):
 
         ### All items listed below ###
         # Quick Access
-        quick_access_items = config.get("selected_quick_access_items", []) 
+        quick_access_items = config.get("selected_quick_access_items", [])
         basic_actions = [item for item in all_quick_access_items if item[0] in quick_access_items]
 
             ## Quick Access on the first level or inside Format / Edit of the context menu
@@ -148,7 +430,7 @@ def build_selection_menu(web_instance, menu, config):
                 action = QAction(action_name, menu)
                 if value == "TIME":
                     action.triggered.connect(lambda _, w=web_instance, c=command: insert_date_and_time(w, c))
-                    menu.addAction(action)               
+                    menu.addAction(action)
                 else:
                     action.triggered.connect(lambda _, w=web_instance, c=command, v=value: exec_command(w, c, v))
                     menu.addAction(action)
@@ -161,7 +443,7 @@ def build_selection_menu(web_instance, menu, config):
                 action = QAction(action_name, menu)
                 if value == "TIME":
                     action.triggered.connect(lambda _, w=web_instance, c=command: insert_date_and_time(w, c))
-                    selection_menu.addAction(action)               
+                    selection_menu.addAction(action)
                 else:
                     action.triggered.connect(lambda _, w=web_instance, c=command, v=value: exec_command(w, c, v))
                     selection_menu.addAction(action)
@@ -401,11 +683,13 @@ def on_editor_context_menu(webview: EditorWebView, menu):
     config = getConfig()["editor"]
     build_selection_menu(web_instance, menu, config)
 
+
 def on_reviewer_context_menu(webview, menu):
     reviewer = mw.reviewer
     web_instance = reviewer.web
     config = getConfig()["reviewer"]
     build_selection_menu(web_instance, menu, config)
+
 
 gui_hooks.editor_will_show_context_menu.append(on_editor_context_menu)
 gui_hooks.webview_will_show_context_menu.append(on_reviewer_context_menu)

@@ -40,7 +40,7 @@ This addon aims to format and edit texts by clicking items in the context menu (
 
 ### Note
 
-- This addon uses a deprecated Javascript function "document.execCommand". Official updates to Javascript may affect this addon in the future.
+- This addon now uses custom JavaScript based on the Selection API instead of the deprecated `document.execCommand`, reducing the risk of future browser updates breaking functionality.
 
 ### Changelog
 
