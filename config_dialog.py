@@ -8,7 +8,6 @@ from aqt.qt import (
     QDialog,
     QDialogButtonBox,
     QFileDialog,
-    QGridLayout,
     QGroupBox,
     QHBoxLayout,
     QInputDialog,
@@ -16,9 +15,12 @@ from aqt.qt import (
     QLineEdit,
     QListWidget,
     QPushButton,
+    QScrollArea,
+    QSizePolicy,
     QTabWidget,
     QVBoxLayout,
     QWidget,
+    Qt,
 )
 
 from .config_store import ADDON_MODULE, load_config, save_config
@@ -29,6 +31,12 @@ try:
     OK_BUTTON = QDialogButtonBox.StandardButton.Ok
     CANCEL_BUTTON = QDialogButtonBox.StandardButton.Cancel
     LINEEDIT_NORMAL = QLineEdit.EchoMode.Normal
+    SIZEPOLICY_MAXIMUM = QSizePolicy.Policy.Maximum
+    SIZEPOLICY_FIXED = QSizePolicy.Policy.Fixed
+    SCROLLBAR_AS_NEEDED = Qt.ScrollBarPolicy.ScrollBarAsNeeded
+    SCROLLBAR_ALWAYS_OFF = Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+    ALIGN_LEFT = Qt.AlignmentFlag.AlignLeft
+    ALIGN_TOP = Qt.AlignmentFlag.AlignTop
 
     def exec_dialog(dialog: QDialog) -> int:
         return dialog.exec()
@@ -36,6 +44,12 @@ except AttributeError:
     OK_BUTTON = QDialogButtonBox.Ok
     CANCEL_BUTTON = QDialogButtonBox.Cancel
     LINEEDIT_NORMAL = QLineEdit.Normal
+    SIZEPOLICY_MAXIMUM = QSizePolicy.Maximum
+    SIZEPOLICY_FIXED = QSizePolicy.Fixed
+    SCROLLBAR_AS_NEEDED = Qt.ScrollBarAsNeeded
+    SCROLLBAR_ALWAYS_OFF = Qt.ScrollBarAlwaysOff
+    ALIGN_LEFT = Qt.AlignLeft
+    ALIGN_TOP = Qt.AlignTop
 
     def exec_dialog(dialog: QDialog) -> int:
         return dialog.exec_()
@@ -77,7 +91,16 @@ class ConfigDialog(QDialog):
         layout.addWidget(button_box)
 
     def _build_general_tab(self) -> None:
-        root = QVBoxLayout(self.general_tab)
+        outer = QVBoxLayout(self.general_tab)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        outer.addWidget(scroll)
+
+        content = QWidget()
+        scroll.setWidget(content)
+
+        root = QVBoxLayout(content)
 
         box_show = QGroupBox("(1) Show 'Format / Edit'")
         box_show_layout = QVBoxLayout(box_show)
@@ -96,11 +119,26 @@ class ConfigDialog(QDialog):
         root.addWidget(box_show)
 
         box_quick_access = QGroupBox("(2) Quick Access Items")
-        box_quick_access_layout = QGridLayout(box_quick_access)
+        box_quick_access_outer = QVBoxLayout(box_quick_access)
+
+        quick_access_scroll = QScrollArea()
+        quick_access_scroll.setWidgetResizable(False)
+        quick_access_scroll.setHorizontalScrollBarPolicy(SCROLLBAR_AS_NEEDED)
+        quick_access_scroll.setVerticalScrollBarPolicy(SCROLLBAR_ALWAYS_OFF)
+        quick_access_scroll.setAlignment(ALIGN_LEFT | ALIGN_TOP)
+
+        quick_access_container = QWidget()
+        quick_access_layout = QHBoxLayout(quick_access_container)
+        quick_access_layout.setContentsMargins(0, 0, 0, 0)
+        quick_access_layout.setSpacing(12)
+        try:
+            quick_access_layout.setAlignment(ALIGN_LEFT | ALIGN_TOP)
+        except Exception:
+            pass
 
         selected_labels = set(self.config.get("selected_quick_access_items", []))
 
-        for index, (group_title, labels) in enumerate(QUICK_ACCESS_GROUPS):
+        for group_title, labels in QUICK_ACCESS_GROUPS:
             group_box = QGroupBox(group_title)
             group_layout = QVBoxLayout(group_box)
 
@@ -111,15 +149,17 @@ class ConfigDialog(QDialog):
                 self.quick_access_checkboxes.append(checkbox)
 
             group_layout.addStretch(1)
-            row = index // 3
-            col = index % 3
-            box_quick_access_layout.addWidget(group_box, row, col)
+            group_box.setSizePolicy(SIZEPOLICY_MAXIMUM, SIZEPOLICY_FIXED)
+            quick_access_layout.addWidget(group_box, 0, ALIGN_TOP)
 
+        quick_access_layout.addStretch(1)
+        quick_access_container.adjustSize()
+
+        quick_access_scroll.setWidget(quick_access_container)
+        quick_access_scroll.setMinimumHeight(quick_access_container.sizeHint().height() + 8)
+
+        box_quick_access_outer.addWidget(quick_access_scroll)
         root.addWidget(box_quick_access)
-
-        note = QLabel("You can also add Style Presets to Quick Access items.")
-        note.setWordWrap(True)
-        root.addWidget(note)
 
         box_position = QGroupBox("(3) Quick Access Position")
         box_position_layout = QVBoxLayout(box_position)
@@ -130,28 +170,24 @@ class ConfigDialog(QDialog):
         self.quick_access_position_checkbox.setChecked(self.config.get("quick_access_position", False))
         box_position_layout.addWidget(self.quick_access_position_checkbox)
 
-        compatibility_note = QLabel(
-            "Quick Access keeps compatibility with previous label names where possible."
-        )
-        compatibility_note.setWordWrap(True)
-        box_position_layout.addWidget(compatibility_note)
-
         root.addWidget(box_position)
         root.addStretch(1)
 
     def _build_user_words_tab(self) -> None:
-        root = QVBoxLayout(self.user_words_tab)
+        outer = QVBoxLayout(self.user_words_tab)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        outer.addWidget(scroll)
+
+        content = QWidget()
+        scroll.setWidget(content)
+
+        root = QVBoxLayout(content)
 
         self.words_checkbox = QCheckBox("Show 'User Words' (the added words below) in the context menu")
         self.words_checkbox.setChecked(self.config.get("user_words_flag", False))
         root.addWidget(self.words_checkbox)
-
-        root.addWidget(QLabel("Word list:"))
-
-        self.words_list_widget = QListWidget()
-        for word in self.config.get("user_words", []):
-            self.words_list_widget.addItem(word)
-        root.addWidget(self.words_list_widget)
 
         button_row_1 = QHBoxLayout()
         self.add_words_button = QPushButton("Add")
@@ -161,6 +197,13 @@ class ConfigDialog(QDialog):
         button_row_1.addWidget(self.edit_words_button)
         button_row_1.addWidget(self.remove_words_button)
         root.addLayout(button_row_1)
+
+        root.addWidget(QLabel("Word list:"))
+
+        self.words_list_widget = QListWidget()
+        for word in self.config.get("user_words", []):
+            self.words_list_widget.addItem(word)
+        root.addWidget(self.words_list_widget)
 
         button_row_2 = QHBoxLayout()
         self.up_button = QPushButton("Move Up")

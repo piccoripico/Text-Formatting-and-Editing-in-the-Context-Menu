@@ -70,13 +70,13 @@ COMMANDS: list[CommandSpec] = [
     cmd("back_white", "Highlight White", "apply_style", {"backgroundColor": "white"}, category="text_color", quick_access_allowed=True),
 
     # Font Size
-    cmd("size_1", "Size 1", "apply_style", {"fontSize": "x-small"}, category="font_size", quick_access_allowed=True),
-    cmd("size_2", "Size 2", "apply_style", {"fontSize": "small"}, category="font_size", quick_access_allowed=True),
-    cmd("size_3", "Size 3", "apply_style", {"fontSize": "medium"}, category="font_size", quick_access_allowed=True),
-    cmd("size_4", "Size 4", "apply_style", {"fontSize": "large"}, category="font_size", quick_access_allowed=True),
-    cmd("size_5", "Size 5", "apply_style", {"fontSize": "x-large"}, category="font_size", quick_access_allowed=True),
-    cmd("size_6", "Size 6", "apply_style", {"fontSize": "xx-large"}, category="font_size", quick_access_allowed=True),
-    cmd("size_7", "Size 7", "apply_style", {"fontSize": "xxx-large"}, category="font_size", quick_access_allowed=True),
+    cmd("size_1", "X-Small", "apply_style", {"fontSize": "x-small"}, category="font_size", quick_access_allowed=True),
+    cmd("size_2", "Small", "apply_style", {"fontSize": "small"}, category="font_size", quick_access_allowed=True),
+    cmd("size_3", "Medium", "apply_style", {"fontSize": "medium"}, category="font_size", quick_access_allowed=True),
+    cmd("size_4", "Large", "apply_style", {"fontSize": "large"}, category="font_size", quick_access_allowed=True),
+    cmd("size_5", "X-Large", "apply_style", {"fontSize": "x-large"}, category="font_size", quick_access_allowed=True),
+    cmd("size_6", "XX-Large", "apply_style", {"fontSize": "xx-large"}, category="font_size", quick_access_allowed=True),
+    cmd("size_7", "XXX-Large", "apply_style", {"fontSize": "xxx-large"}, category="font_size", quick_access_allowed=True),
 
     # Font
     cmd("font_dialog", "Font...", "font_dialog", category="font"),
@@ -196,7 +196,9 @@ COMMANDS: list[CommandSpec] = [
     cmd("date_day_month_dd_yyyy", "Day, Month DD, YYYY", "insert_datetime", "%A, %B %d, %Y", category="insert", submenu="Insert Date and Time", quick_access_allowed=True),
     cmd("time_ampm", "hh:mm AM/PM", "insert_datetime", "%I:%M %p", category="insert", submenu="Insert Date and Time", quick_access_allowed=True),
     cmd("time_24h", "HH:mm", "insert_datetime", "%H:%M", category="insert", submenu="Insert Date and Time", quick_access_allowed=True),
+    cmd("time_24h_seconds", "HH:mm:ss", "insert_datetime", "%H:%M:%S", category="insert", submenu="Insert Date and Time", quick_access_allowed=True),
     cmd("datetime_ymd_hm", "YYYY-MM-DD HH:mm", "insert_datetime", "%Y-%m-%d %H:%M", category="insert", submenu="Insert Date and Time", quick_access_allowed=True),
+    cmd("datetime_slash_ymd_hms", "YYYY/MM/DD HH:mm:ss", "insert_datetime", "%Y/%m/%d %H:%M:%S", category="insert", submenu="Insert Date and Time", quick_access_allowed=True),
 
     cmd("special_em_dash", "Em Dash (—)", "insert_text", "—", category="insert", submenu="Insert Special Characters"),
     cmd("special_en_dash", "En Dash (–)", "insert_text", "–", category="insert", submenu="Insert Special Characters"),
@@ -229,9 +231,7 @@ COMMANDS: list[CommandSpec] = [
     cmd("undo", "Undo", "undo", category="edit"),
     cmd("redo", "Redo", "redo", category="edit"),
 
-    # Clear helpers
-    cmd("clear_text_color", "Clear Text Color", "clear_style_properties", ["color"], category="clear_format"),
-    cmd("clear_highlight", "Clear Highlight", "clear_style_properties", ["backgroundColor"], category="clear_format"),
+    # Clear
     cmd("clear_format", "Clear All Formatting", "clear_format", category="clear_format", quick_access_allowed=True),
 ]
 
@@ -272,7 +272,7 @@ QUICK_ACCESS_GROUPS: list[tuple[str, list[str]]] = [
     ),
     (
         "Font Size",
-        ["Size 1", "Size 2", "Size 3", "Size 4", "Size 5", "Size 6", "Size 7"],
+        ["X-Small", "Small", "Medium", "Large", "X-Large", "XX-Large", "XXX-Large"],
     ),
     (
         "Style Presets",
@@ -306,7 +306,9 @@ QUICK_ACCESS_GROUPS: list[tuple[str, list[str]]] = [
             "Day, Month DD, YYYY",
             "hh:mm AM/PM",
             "HH:mm",
+            "HH:mm:ss",
             "YYYY-MM-DD HH:mm",
+            "YYYY/MM/DD HH:mm:ss",
         ],
     ),
     (

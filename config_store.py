@@ -31,6 +31,13 @@ LEGACY_QUICK_ACCESS_LABEL_ALIASES: dict[str, str] = {
     "backYellow": "Highlight Yellow",
     "backBlack": "Highlight Black",
     "backWhite": "Highlight White",
+    "Size 1": "X-Small",
+    "Size 2": "Small",
+    "Size 3": "Medium",
+    "Size 4": "Large",
+    "Size 5": "X-Large",
+    "Size 6": "XX-Large",
+    "Size 7": "XXX-Large",
 }
 
 

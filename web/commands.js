@@ -66,6 +66,43 @@
     sel.addRange(range);
   }
 
+  function notifyEditorChanged() {
+    let target = document.activeElement;
+    const range = getRange();
+
+    if (!target || target === document.body) {
+      const baseNode = range ? range.startContainer : document.body;
+      target = editableRootFrom(baseNode);
+    }
+
+    try {
+      if (target && typeof target.dispatchEvent === "function") {
+        target.dispatchEvent(new Event("input", { bubbles: true }));
+        target.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    } catch (_e) {
+      // ignore
+    }
+
+    try {
+      if (typeof triggerChanges === "function") {
+        triggerChanges();
+      }
+    } catch (_e) {
+      // ignore
+    }
+
+    try {
+      if (typeof saveNow === "function") {
+        saveNow(1);
+      }
+    } catch (_e) {
+      // ignore
+    }
+
+    return true;
+  }
+
   function textToFragment(text) {
     const frag = document.createDocumentFragment();
     const normalized = String(text || "").replace(/\r\n/g, "\n");
@@ -94,6 +131,8 @@
     if (lastNode) {
       setCaretAfter(lastNode);
     }
+
+    notifyEditorChanged();
     return true;
   }
 
@@ -104,6 +143,7 @@
     range.deleteContents();
     range.insertNode(node);
     setCaretAfter(node);
+    notifyEditorChanged();
     return true;
   }
 
@@ -132,6 +172,7 @@
       el.appendChild(document.createTextNode("\u200b"));
       range.insertNode(el);
       placeCaretInside(el);
+      notifyEditorChanged();
       return true;
     }
 
@@ -143,6 +184,7 @@
       range.insertNode(el);
     }
     setCaretAfter(el);
+    notifyEditorChanged();
     return true;
   }
 
@@ -157,6 +199,7 @@
       span.appendChild(document.createTextNode("\u200b"));
       range.insertNode(span);
       placeCaretInside(span);
+      notifyEditorChanged();
       return true;
     }
 
@@ -168,6 +211,7 @@
       range.insertNode(span);
     }
     setCaretAfter(span);
+    notifyEditorChanged();
     return true;
   }
 
@@ -184,6 +228,7 @@
         range.insertNode(block);
         Object.assign(block.style, style || {});
         placeCaretInside(block);
+        notifyEditorChanged();
         return true;
       }
 
@@ -192,10 +237,12 @@
       range.insertNode(block);
       Object.assign(block.style, style || {});
       setCaretAfter(block);
+      notifyEditorChanged();
       return true;
     }
 
     Object.assign(block.style, style || {});
+    notifyEditorChanged();
     return true;
   }
 
@@ -211,6 +258,7 @@
     range.deleteContents();
     range.insertNode(a);
     setCaretAfter(a);
+    notifyEditorChanged();
     return true;
   }
 
@@ -232,6 +280,7 @@
       bq.appendChild(document.createElement("br"));
       range.insertNode(bq);
       placeCaretInside(bq);
+      notifyEditorChanged();
       return true;
     }
 
@@ -239,6 +288,7 @@
     bq.appendChild(frag);
     range.insertNode(bq);
     setCaretAfter(bq);
+    notifyEditorChanged();
     return true;
   }
 
@@ -248,6 +298,7 @@
     const block = closestBlock(range.startContainer);
     const current = parseInt(block.style.marginLeft || "0", 10) || 0;
     block.style.marginLeft = `${current + 40}px`;
+    notifyEditorChanged();
     return true;
   }
 
@@ -257,6 +308,7 @@
     const block = closestBlock(range.startContainer);
     const current = parseInt(block.style.marginLeft || "0", 10) || 0;
     block.style.marginLeft = `${Math.max(0, current - 40)}px`;
+    notifyEditorChanged();
     return true;
   }
 
@@ -281,6 +333,7 @@
     range.deleteContents();
     range.insertNode(list);
     setCaretAfter(list);
+    notifyEditorChanged();
     return true;
   }
 
@@ -307,6 +360,7 @@
     const range = getRange();
     if (!range) return false;
     range.deleteContents();
+    notifyEditorChanged();
     return true;
   }
 
@@ -413,6 +467,45 @@
     return true;
   }
 
+  function removeStylePropertiesFromElement(el, properties) {
+    if (!el || el.nodeType !== Node.ELEMENT_NODE) return false;
+
+    let changed = false;
+
+    properties.forEach((prop) => {
+      if (el.style && el.style[prop]) {
+        el.style[prop] = "";
+        changed = true;
+      }
+
+      if (prop === "color" && el.hasAttribute("color")) {
+        el.removeAttribute("color");
+        changed = true;
+      }
+
+      if (prop === "backgroundColor" && el.hasAttribute("bgcolor")) {
+        el.removeAttribute("bgcolor");
+        changed = true;
+      }
+    });
+
+    cleanEmptyStyleAttribute(el);
+
+    if (
+      el.parentNode &&
+      (el.tagName === "SPAN" || el.tagName === "FONT") &&
+      !el.getAttribute("style") &&
+      !el.hasAttribute("color") &&
+      !el.hasAttribute("bgcolor") &&
+      el.attributes.length === 0
+    ) {
+      unwrapElement(el);
+      changed = true;
+    }
+
+    return changed;
+  }
+
   function removeLink() {
     const range = getRange();
     if (!range) return false;
@@ -421,6 +514,7 @@
       const anchor = closestAncestorTag(range.startContainer, "A");
       if (!anchor) return false;
       unwrapElement(anchor);
+      notifyEditorChanged();
       return true;
     }
 
@@ -434,7 +528,9 @@
     });
 
     anchors.forEach(unwrapElement);
-    return reinsertExtractedFragment(range, frag);
+    reinsertExtractedFragment(range, frag);
+    notifyEditorChanged();
+    return true;
   }
 
   function clearStyleProperties(properties) {
@@ -444,25 +540,15 @@
     }
 
     if (range.collapsed) {
-      let node = range.startContainer.nodeType === Node.TEXT_NODE
-        ? range.startContainer.parentNode
-        : range.startContainer;
+      let node =
+        range.startContainer.nodeType === Node.TEXT_NODE
+          ? range.startContainer.parentNode
+          : range.startContainer;
 
       while (node && node !== document.body) {
-        if (node.nodeType === Node.ELEMENT_NODE && node.style) {
-          let changed = false;
-
-          properties.forEach((prop) => {
-            if (node.style[prop]) {
-              node.style[prop] = "";
-              changed = true;
-            }
-          });
-
-          if (changed) {
-            cleanEmptyStyleAttribute(node);
-            return true;
-          }
+        if (removeStylePropertiesFromElement(node, properties)) {
+          notifyEditorChanged();
+          return true;
         }
         node = node.parentNode;
       }
@@ -471,18 +557,25 @@
     }
 
     const frag = range.extractContents();
+    let changed = false;
+    const elements = [];
 
     walkElements(frag, (el) => {
-      if (!el.style) return;
-
-      properties.forEach((prop) => {
-        el.style[prop] = "";
-      });
-
-      cleanEmptyStyleAttribute(el);
+      elements.push(el);
     });
 
-    return reinsertExtractedFragment(range, frag);
+    elements.reverse().forEach((el) => {
+      if (removeStylePropertiesFromElement(el, properties)) {
+        changed = true;
+      }
+    });
+
+    reinsertExtractedFragment(range, frag);
+
+    if (changed) {
+      notifyEditorChanged();
+    }
+    return changed;
   }
 
   function compatCommand(command) {
