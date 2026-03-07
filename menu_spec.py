@@ -13,7 +13,7 @@ class CommandSpec:
     action: str
     arg: Any = None
     category: str = ""
-    submenu: str | None = None
+    submenu_path: tuple[str, ...] = field(default_factory=tuple)
     contexts: frozenset[str] = field(default_factory=lambda: CTX_BOTH)
     quick_access_allowed: bool = False
 
@@ -25,7 +25,7 @@ def cmd(
     arg: Any = None,
     *,
     category: str,
-    submenu: str | None = None,
+    submenu_path: tuple[str, ...] = (),
     contexts: frozenset[str] = CTX_BOTH,
     quick_access_allowed: bool = False,
 ) -> CommandSpec:
@@ -35,11 +35,170 @@ def cmd(
         action=action,
         arg=arg,
         category=category,
-        submenu=submenu,
+        submenu_path=submenu_path,
         contexts=contexts,
         quick_access_allowed=quick_access_allowed,
     )
 
+
+STYLE_PRESET_LABELS = [
+    "Strong Emphasis (Bold + Underline)",
+    "Important (Bold + Red)",
+    "Key Point (Bold + Yellow Highlight)",
+    "Alert (Bold + Red + Yellow Highlight)",
+    "Underlined Attention (Underline + Red)",
+    "Blue Emphasis (Bold + Blue)",
+    "Green Emphasis (Bold + Green)",
+    "Marked Attention (Bold + Magenta)",
+    "Heading Large (Bold + Size 5)",
+    "Large Emphasis (Bold + Red + Size 5)",
+    "Side Note (Cyan + Size 2)",
+]
+
+CORE_QUICK_ACCESS_GROUPS: list[tuple[str, list[str]]] = [
+    ("Style Presets", STYLE_PRESET_LABELS),
+    (
+        "Text Styling",
+        [
+            "Bold",
+            "Italic",
+            "Underline",
+            "Strikethrough",
+            "Small Text",
+            "Superscript",
+            "Subscript",
+            "Monospace",
+            "Inline Code",
+        ],
+    ),
+    (
+        "Text Color",
+        [
+            "Red", "Green", "Blue", "Cyan", "Magenta", "Yellow", "Black", "White",
+            "Highlight Red", "Highlight Green", "Highlight Blue", "Highlight Cyan",
+            "Highlight Magenta", "Highlight Yellow", "Highlight Black", "Highlight White",
+        ],
+    ),
+    ("Font Size", ["X-Small", "Small", "Medium", "Large", "X-Large", "XX-Large", "XXX-Large"]),
+    (
+        "Alignment / List",
+        [
+            "Justify Left",
+            "Justify Center",
+            "Justify Right",
+            "Justify Full",
+            "Indent",
+            "Outdent",
+            "Insert Unordered List",
+            "Insert Ordered List",
+        ],
+    ),
+    ("Clear Formatting", ["Clear All Formatting"]),
+]
+
+INSERT_QUICK_ACCESS_GROUPS: list[tuple[str, list[str]]] = [
+    ("Insert Helpers", ["Insert Link", "Insert Image", "Insert Ruby"]),
+    (
+        "Date / Time",
+        [
+            "YYYY-MM-DD",
+            "MM/DD/YYYY",
+            "Month DD, YYYY",
+            "Day, Month DD, YYYY",
+            "hh:mm AM/PM",
+            "HH:mm",
+            "HH:mm:ss",
+            "YYYY-MM-DD HH:mm",
+            "YYYY/MM/DD HH:mm:ss",
+        ],
+    ),
+    (
+        "Math",
+        [
+            "MathJax Inline",
+            "MathJax Display",
+            "Chemistry Inline (mhchem)",
+            "Chemistry Display (mhchem)",
+            "LaTeX",
+        ],
+    ),
+    ("Structure", ["Blockquote", "Horizontal Line"]),
+]
+
+SPECIAL_CHARACTER_GROUPS: list[tuple[str, list[tuple[str, str, str]]]] = [
+    (
+        "Typography",
+        [
+            ("special_em_dash", "Em Dash (—)", "—"),
+            ("special_en_dash", "En Dash (–)", "–"),
+            ("special_hbar", "Horizontal Bar (―)", "―"),
+            ("special_ellipsis", "Ellipsis (…)", "…"),
+            ("special_bullet", "Bullet (•)", "•"),
+            ("special_middle_dot", "Middle Dot (·)", "·"),
+            ("special_japanese_middle_dot", "Japanese Middle Dot (・)", "・"),
+            ("special_double_low_line", "Double Low Line (‗)", "‗"),
+        ],
+    ),
+    (
+        "Arrows / Marks",
+        [
+            ("special_arrow_right", "Right Arrow (→)", "→"),
+            ("special_arrow_left", "Left Arrow (←)", "←"),
+            ("special_arrow_up", "Up Arrow (↑)", "↑"),
+            ("special_arrow_down", "Down Arrow (↓)", "↓"),
+            ("special_arrow_lr", "Left-Right Arrow (↔)", "↔"),
+            ("special_double_arrow_right", "Double Right Arrow (⇒)", "⇒"),
+            ("special_double_arrow_lr", "Double Left-Right Arrow (⇔)", "⇔"),
+            ("special_check_mark", "Check Mark (✓)", "✓"),
+            ("special_cross_mark", "Cross Mark (✗)", "✗"),
+            ("special_reference_mark", "Reference Mark (※)", "※"),
+        ],
+    ),
+    (
+        "Math / Technical Symbols",
+        [
+            ("special_plus_minus", "Plus-Minus (±)", "±"),
+            ("special_multiplication", "Multiplication (×)", "×"),
+            ("special_division", "Division (÷)", "÷"),
+            ("special_not_equal", "Not Equal (≠)", "≠"),
+            ("special_leq", "Less Than or Equal (≤)", "≤"),
+            ("special_geq", "Greater Than or Equal (≥)", "≥"),
+            ("special_approx", "Approximately Equal (≈)", "≈"),
+            ("special_infinity", "Infinity (∞)", "∞"),
+            ("special_degree", "Degree (°)", "°"),
+            ("special_micro", "Micro (µ)", "µ"),
+            ("special_not", "Not (¬)", "¬"),
+        ],
+    ),
+    (
+        "Legal / Reference",
+        [
+            ("special_section", "Section (§)", "§"),
+            ("special_pilcrow", "Pilcrow (¶)", "¶"),
+            ("special_numero", "Numero Sign (№)", "№"),
+            ("special_copyright", "Copyright (©)", "©"),
+            ("special_registered", "Registered (®)", "®"),
+            ("special_trademark", "Trademark (™)", "™"),
+        ],
+    ),
+    (
+        "Currency / Units",
+        [
+            ("special_yen", "Yen/Yuan (¥)", "¥"),
+            ("special_euro", "Euro (€)", "€"),
+            ("special_pound", "Pound (£)", "£"),
+            ("special_cent", "Cent (¢)", "¢"),
+            ("special_celsius", "Celsius (℃)", "℃"),
+            ("special_fahrenheit", "Fahrenheit (℉)", "℉"),
+            ("special_ohm", "Ohm (Ω)", "Ω"),
+        ],
+    ),
+]
+
+SPECIAL_CHARACTER_QUICK_ACCESS_GROUPS: list[tuple[str, list[str]]] = [
+    (group_name, [label for _id, label, _char in items])
+    for group_name, items in SPECIAL_CHARACTER_GROUPS
+]
 
 COMMANDS: list[CommandSpec] = [
     # Text Styling
@@ -47,8 +206,18 @@ COMMANDS: list[CommandSpec] = [
     cmd("italic", "Italic", "wrap_tag", {"tag": "i"}, category="text_styling", quick_access_allowed=True),
     cmd("underline", "Underline", "wrap_tag", {"tag": "u"}, category="text_styling", quick_access_allowed=True),
     cmd("strikethrough", "Strikethrough", "wrap_tag", {"tag": "s"}, category="text_styling", quick_access_allowed=True),
+    cmd("small_text", "Small Text", "apply_style", {"fontSize": "small"}, category="text_styling", quick_access_allowed=True),
     cmd("superscript", "Superscript", "wrap_tag", {"tag": "sup"}, category="text_styling", quick_access_allowed=True),
     cmd("subscript", "Subscript", "wrap_tag", {"tag": "sub"}, category="text_styling", quick_access_allowed=True),
+    cmd("monospace", "Monospace", "apply_style", {"fontFamily": "monospace"}, category="text_styling", quick_access_allowed=True),
+    cmd(
+        "inline_code",
+        "Inline Code",
+        "apply_style",
+        {"fontFamily": "monospace", "backgroundColor": "#f5f5f5"},
+        category="text_styling",
+        quick_access_allowed=True,
+    ),
 
     # Text Color
     cmd("red", "Red", "apply_style", {"color": "red"}, category="text_color", quick_access_allowed=True),
@@ -185,41 +354,86 @@ COMMANDS: list[CommandSpec] = [
     cmd("word_count", "Word Count", "word_count", category="tools"),
 
     # Insert
-    cmd("insert_link", "Insert Link", "insert_link_prompt", category="insert"),
-    cmd("insert_image", "Insert Image", "insert_image_prompt", category="insert"),
-    cmd("insert_blockquote", "Insert Blockquote", "insert_blockquote", category="insert"),
-    cmd("insert_horizontal_rule", "Insert Horizontal Line", "insert_html", "<hr>", category="insert"),
+    cmd("insert_link", "Insert Link", "insert_link_prompt", category="insert", quick_access_allowed=True),
+    cmd("insert_image", "Insert Image", "insert_image_prompt", category="insert", quick_access_allowed=True),
+    cmd("insert_ruby", "Insert Ruby", "insert_ruby_prompt", category="insert", quick_access_allowed=True),
 
-    cmd("date_ymd", "YYYY-MM-DD", "insert_datetime", "%Y-%m-%d", category="insert", submenu="Insert Date and Time", quick_access_allowed=True),
-    cmd("date_mdy", "MM/DD/YYYY", "insert_datetime", "%m/%d/%Y", category="insert", submenu="Insert Date and Time", quick_access_allowed=True),
-    cmd("date_month_dd_yyyy", "Month DD, YYYY", "insert_datetime", "%B %d, %Y", category="insert", submenu="Insert Date and Time", quick_access_allowed=True),
-    cmd("date_day_month_dd_yyyy", "Day, Month DD, YYYY", "insert_datetime", "%A, %B %d, %Y", category="insert", submenu="Insert Date and Time", quick_access_allowed=True),
-    cmd("time_ampm", "hh:mm AM/PM", "insert_datetime", "%I:%M %p", category="insert", submenu="Insert Date and Time", quick_access_allowed=True),
-    cmd("time_24h", "HH:mm", "insert_datetime", "%H:%M", category="insert", submenu="Insert Date and Time", quick_access_allowed=True),
-    cmd("time_24h_seconds", "HH:mm:ss", "insert_datetime", "%H:%M:%S", category="insert", submenu="Insert Date and Time", quick_access_allowed=True),
-    cmd("datetime_ymd_hm", "YYYY-MM-DD HH:mm", "insert_datetime", "%Y-%m-%d %H:%M", category="insert", submenu="Insert Date and Time", quick_access_allowed=True),
-    cmd("datetime_slash_ymd_hms", "YYYY/MM/DD HH:mm:ss", "insert_datetime", "%Y/%m/%d %H:%M:%S", category="insert", submenu="Insert Date and Time", quick_access_allowed=True),
+    # Insert Date and Time
+    cmd("date_ymd", "YYYY-MM-DD", "insert_datetime", "%Y-%m-%d", category="insert", submenu_path=("Insert Date and Time",), quick_access_allowed=True),
+    cmd("date_mdy", "MM/DD/YYYY", "insert_datetime", "%m/%d/%Y", category="insert", submenu_path=("Insert Date and Time",), quick_access_allowed=True),
+    cmd("date_month_dd_yyyy", "Month DD, YYYY", "insert_datetime", "%B %d, %Y", category="insert", submenu_path=("Insert Date and Time",), quick_access_allowed=True),
+    cmd("date_day_month_dd_yyyy", "Day, Month DD, YYYY", "insert_datetime", "%A, %B %d, %Y", category="insert", submenu_path=("Insert Date and Time",), quick_access_allowed=True),
+    cmd("time_ampm", "hh:mm AM/PM", "insert_datetime", "%I:%M %p", category="insert", submenu_path=("Insert Date and Time",), quick_access_allowed=True),
+    cmd("time_24h", "HH:mm", "insert_datetime", "%H:%M", category="insert", submenu_path=("Insert Date and Time",), quick_access_allowed=True),
+    cmd("time_24h_seconds", "HH:mm:ss", "insert_datetime", "%H:%M:%S", category="insert", submenu_path=("Insert Date and Time",), quick_access_allowed=True),
+    cmd("datetime_ymd_hm", "YYYY-MM-DD HH:mm", "insert_datetime", "%Y-%m-%d %H:%M", category="insert", submenu_path=("Insert Date and Time",), quick_access_allowed=True),
+    cmd("datetime_slash_ymd_hms", "YYYY/MM/DD HH:mm:ss", "insert_datetime", "%Y/%m/%d %H:%M:%S", category="insert", submenu_path=("Insert Date and Time",), quick_access_allowed=True),
 
-    cmd("special_em_dash", "Em Dash (—)", "insert_text", "—", category="insert", submenu="Insert Special Characters"),
-    cmd("special_en_dash", "En Dash (–)", "insert_text", "–", category="insert", submenu="Insert Special Characters"),
-    cmd("special_hbar", "Horizontal Bar (―)", "insert_text", "―", category="insert", submenu="Insert Special Characters"),
-    cmd("special_double_low_line", "Double Low Line (‗)", "insert_text", "‗", category="insert", submenu="Insert Special Characters"),
-    cmd("special_bullet", "Bullet (•)", "insert_text", "•", category="insert", submenu="Insert Special Characters"),
-    cmd("special_section", "Section (§)", "insert_text", "§", category="insert", submenu="Insert Special Characters"),
-    cmd("special_pilcrow", "Pilcrow (¶)", "insert_text", "¶", category="insert", submenu="Insert Special Characters"),
-    cmd("special_inverted_q", "Inverted ? (¿)", "insert_text", "¿", category="insert", submenu="Insert Special Characters"),
-    cmd("special_not", "Not (¬)", "insert_text", "¬", category="insert", submenu="Insert Special Characters"),
-    cmd("special_degree", "Degree (°)", "insert_text", "°", category="insert", submenu="Insert Special Characters"),
-    cmd("special_micro", "Micro (µ)", "insert_text", "µ", category="insert", submenu="Insert Special Characters"),
-    cmd("special_plus_minus", "+- (±)", "insert_text", "±", category="insert", submenu="Insert Special Characters"),
-    cmd("special_division", "Division (÷)", "insert_text", "÷", category="insert", submenu="Insert Special Characters"),
-    cmd("special_copyright", "Copyright (©)", "insert_text", "©", category="insert", submenu="Insert Special Characters"),
-    cmd("special_registered", "Registered (®)", "insert_text", "®", category="insert", submenu="Insert Special Characters"),
-    cmd("special_trademark", "Trademark (™)", "insert_text", "™", category="insert", submenu="Insert Special Characters"),
-    cmd("special_euro", "Euro (€)", "insert_text", "€", category="insert", submenu="Insert Special Characters"),
-    cmd("special_yen", "Yen/Yuan (¥)", "insert_text", "¥", category="insert", submenu="Insert Special Characters"),
-    cmd("special_pound", "Pound (£)", "insert_text", "£", category="insert", submenu="Insert Special Characters"),
-    cmd("special_cent", "Cent (¢)", "insert_text", "¢", category="insert", submenu="Insert Special Characters"),
+    # Insert Math
+    cmd(
+        "mathjax_inline",
+        "MathJax Inline",
+        "insert_text",
+        "\\(\u200b\\)",
+        category="insert",
+        submenu_path=("Insert Math",),
+        quick_access_allowed=True,
+    ),
+    cmd(
+        "mathjax_display",
+        "MathJax Display",
+        "insert_text",
+        "\\[\n\u200b\n\\]",
+        category="insert",
+        submenu_path=("Insert Math",),
+        quick_access_allowed=True,
+    ),
+    cmd(
+        "chem_inline",
+        "Chemistry Inline (mhchem)",
+        "insert_text",
+        "\\(\\ce{\u200b}\\)",
+        category="insert",
+        submenu_path=("Insert Math",),
+        quick_access_allowed=True,
+    ),
+    cmd(
+        "chem_display",
+        "Chemistry Display (mhchem)",
+        "insert_text",
+        "\\[\n\\ce{\u200b}\n\\]",
+        category="insert",
+        submenu_path=("Insert Math",),
+        quick_access_allowed=True,
+    ),
+    cmd(
+        "latex_block",
+        "LaTeX",
+        "insert_text",
+        "[latex]\u200b[/latex]",
+        category="insert",
+        submenu_path=("Insert Math",),
+        quick_access_allowed=True,
+    ),
+
+    # Insert Structure
+    cmd(
+        "insert_blockquote",
+        "Blockquote",
+        "insert_blockquote",
+        category="insert",
+        submenu_path=("Insert Structure",),
+        quick_access_allowed=True,
+    ),
+    cmd(
+        "insert_horizontal_rule",
+        "Horizontal Line",
+        "insert_html",
+        "<hr>",
+        category="insert",
+        submenu_path=("Insert Structure",),
+        quick_access_allowed=True,
+    ),
 
     # Edit
     cmd("cut", "Cut", "cut", category="edit"),
@@ -235,7 +449,41 @@ COMMANDS: list[CommandSpec] = [
     cmd("clear_format", "Clear All Formatting", "clear_format", category="clear_format", quick_access_allowed=True),
 ]
 
-LABEL_TO_SPEC: dict[str, CommandSpec] = {spec.label: spec for spec in COMMANDS}
+# Insert Special Characters
+for group_name, items in SPECIAL_CHARACTER_GROUPS:
+    for item_id, label, char in items:
+        COMMANDS.append(
+            cmd(
+                item_id,
+                label,
+                "insert_text",
+                char,
+                category="insert",
+                submenu_path=("Insert Special Characters", group_name),
+                quick_access_allowed=True,
+            )
+        )
+
+# Insert Table
+TABLE_COMMANDS: list[CommandSpec] = []
+for with_header, header_label in ((False, "No Header"), (True, "With Header")):
+    for rows in range(1, 11):
+        row_label = f"{rows} Row" if rows == 1 else f"{rows} Rows"
+        for cols in range(1, 11):
+            col_label = f"{cols} Col" if cols == 1 else f"{cols} Cols"
+            TABLE_COMMANDS.append(
+                cmd(
+                    id=f"table_{'with_header' if with_header else 'no_header'}_r{rows}_c{cols}",
+                    label=col_label,
+                    action="insert_table",
+                    arg={"rows": rows, "cols": cols, "with_header": with_header},
+                    category="insert",
+                    submenu_path=("Insert Table", header_label, row_label),
+                )
+            )
+
+insert_ruby_index = next(i for i, spec in enumerate(COMMANDS) if spec.id == "insert_ruby")
+COMMANDS[insert_ruby_index + 1:insert_ruby_index + 1] = TABLE_COMMANDS
 
 STYLE_PRESET_SECTIONS: list[list[str]] = [
     [
@@ -255,64 +503,4 @@ STYLE_PRESET_SECTIONS: list[list[str]] = [
         "Large Emphasis (Bold + Red + Size 5)",
         "Side Note (Cyan + Size 2)",
     ],
-]
-
-QUICK_ACCESS_GROUPS: list[tuple[str, list[str]]] = [
-    (
-        "Text Styling",
-        ["Bold", "Italic", "Underline", "Strikethrough", "Superscript", "Subscript"],
-    ),
-    (
-        "Text Color",
-        [
-            "Red", "Green", "Blue", "Cyan", "Magenta", "Yellow", "Black", "White",
-            "Highlight Red", "Highlight Green", "Highlight Blue", "Highlight Cyan",
-            "Highlight Magenta", "Highlight Yellow", "Highlight Black", "Highlight White",
-        ],
-    ),
-    (
-        "Font Size",
-        ["X-Small", "Small", "Medium", "Large", "X-Large", "XX-Large", "XXX-Large"],
-    ),
-    (
-        "Style Presets",
-        [
-            "Strong Emphasis (Bold + Underline)",
-            "Important (Bold + Red)",
-            "Key Point (Bold + Yellow Highlight)",
-            "Alert (Bold + Red + Yellow Highlight)",
-            "Underlined Attention (Underline + Red)",
-            "Blue Emphasis (Bold + Blue)",
-            "Green Emphasis (Bold + Green)",
-            "Marked Attention (Bold + Magenta)",
-            "Heading Large (Bold + Size 5)",
-            "Large Emphasis (Bold + Red + Size 5)",
-            "Side Note (Cyan + Size 2)",
-        ],
-    ),
-    (
-        "Alignment / List",
-        [
-            "Justify Left", "Justify Center", "Justify Right", "Justify Full",
-            "Indent", "Outdent", "Insert Unordered List", "Insert Ordered List",
-        ],
-    ),
-    (
-        "Date / Time",
-        [
-            "YYYY-MM-DD",
-            "MM/DD/YYYY",
-            "Month DD, YYYY",
-            "Day, Month DD, YYYY",
-            "hh:mm AM/PM",
-            "HH:mm",
-            "HH:mm:ss",
-            "YYYY-MM-DD HH:mm",
-            "YYYY/MM/DD HH:mm:ss",
-        ],
-    ),
-    (
-        "Clear Formatting",
-        ["Clear All Formatting"],
-    ),
 ]

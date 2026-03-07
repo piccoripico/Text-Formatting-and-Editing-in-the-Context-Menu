@@ -24,8 +24,11 @@ from aqt.qt import (
 )
 
 from .config_store import ADDON_MODULE, load_config, save_config
-from .menu_spec import QUICK_ACCESS_GROUPS
-
+from .menu_spec import (
+    CORE_QUICK_ACCESS_GROUPS,
+    INSERT_QUICK_ACCESS_GROUPS,
+    SPECIAL_CHARACTER_QUICK_ACCESS_GROUPS,
+)
 
 try:
     OK_BUTTON = QDialogButtonBox.StandardButton.Ok
@@ -68,7 +71,7 @@ class ConfigDialog(QDialog):
     def __init__(self, parent) -> None:
         super().__init__(parent)
         self.setWindowTitle("Context Menu Text Tools - Config")
-        self.resize(980, 700)
+        self.resize(1080, 760)
 
         self.config = load_config()
         self.quick_access_checkboxes: list[QCheckBox] = []
@@ -76,13 +79,16 @@ class ConfigDialog(QDialog):
         layout = QVBoxLayout(self)
         tabs = QTabWidget(self)
         self.general_tab = QWidget()
+        self.quick_items_tab = QWidget()
         self.user_words_tab = QWidget()
 
         tabs.addTab(self.general_tab, "General")
+        tabs.addTab(self.quick_items_tab, "Quick Items")
         tabs.addTab(self.user_words_tab, "User Words")
         layout.addWidget(tabs)
 
         self._build_general_tab()
+        self._build_quick_items_tab()
         self._build_user_words_tab()
 
         button_box = QDialogButtonBox(OK_BUTTON | CANCEL_BUTTON)
@@ -102,43 +108,38 @@ class ConfigDialog(QDialog):
 
         root = QVBoxLayout(content)
 
-        box_show = QGroupBox("(1) Show 'Format / Edit'")
-        box_show_layout = QVBoxLayout(box_show)
-
-        self.editor_checkbox = QCheckBox("Show 'Format / Edit' in Editor context menu")
+        self.editor_checkbox = QCheckBox("Show 'Text Tools' in the editor context menu")
         self.editor_checkbox.setChecked(self.config.get("editor", {}).get("enabled", True))
-        box_show_layout.addWidget(self.editor_checkbox)
+        root.addWidget(self.editor_checkbox)
 
         self.reviewer_checkbox = QCheckBox(
-            "Show 'Format / Edit' in Reviewer context menu "
-            "(Available with the add-on 'Edit Field During Review (Cloze)', excluding some features.)"
+            "Show 'Text Tools' in the reviewer context menu "
+            "(Most features are available when the 'Edit Field During Review (Cloze)' add-on is installed.)"
         )
         self.reviewer_checkbox.setChecked(self.config.get("reviewer", {}).get("enabled", True))
-        box_show_layout.addWidget(self.reviewer_checkbox)
+        root.addWidget(self.reviewer_checkbox)
 
-        root.addWidget(box_show)
+        root.addStretch(1)
 
-        box_quick_access = QGroupBox("(2) Quick Access Items")
-        box_quick_access_outer = QVBoxLayout(box_quick_access)
+    def _build_group_scroll_area(self, groups: list[tuple[str, list[str]]]) -> QScrollArea:
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(False)
+        scroll.setHorizontalScrollBarPolicy(SCROLLBAR_AS_NEEDED)
+        scroll.setVerticalScrollBarPolicy(SCROLLBAR_ALWAYS_OFF)
+        scroll.setAlignment(ALIGN_LEFT | ALIGN_TOP)
 
-        quick_access_scroll = QScrollArea()
-        quick_access_scroll.setWidgetResizable(False)
-        quick_access_scroll.setHorizontalScrollBarPolicy(SCROLLBAR_AS_NEEDED)
-        quick_access_scroll.setVerticalScrollBarPolicy(SCROLLBAR_ALWAYS_OFF)
-        quick_access_scroll.setAlignment(ALIGN_LEFT | ALIGN_TOP)
-
-        quick_access_container = QWidget()
-        quick_access_layout = QHBoxLayout(quick_access_container)
-        quick_access_layout.setContentsMargins(0, 0, 0, 0)
-        quick_access_layout.setSpacing(12)
+        container = QWidget()
+        layout = QHBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(12)
         try:
-            quick_access_layout.setAlignment(ALIGN_LEFT | ALIGN_TOP)
+            layout.setAlignment(ALIGN_LEFT | ALIGN_TOP)
         except Exception:
             pass
 
         selected_labels = set(self.config.get("selected_quick_access_items", []))
 
-        for group_title, labels in QUICK_ACCESS_GROUPS:
+        for group_title, labels in groups:
             group_box = QGroupBox(group_title)
             group_layout = QVBoxLayout(group_box)
 
@@ -150,28 +151,52 @@ class ConfigDialog(QDialog):
 
             group_layout.addStretch(1)
             group_box.setSizePolicy(SIZEPOLICY_MAXIMUM, SIZEPOLICY_FIXED)
-            quick_access_layout.addWidget(group_box, 0, ALIGN_TOP)
+            layout.addWidget(group_box, 0, ALIGN_TOP)
 
-        quick_access_layout.addStretch(1)
-        quick_access_container.adjustSize()
+        layout.addStretch(1)
+        container.adjustSize()
 
-        quick_access_scroll.setWidget(quick_access_container)
-        quick_access_scroll.setMinimumHeight(quick_access_container.sizeHint().height() + 8)
+        scroll.setWidget(container)
+        scroll.setMinimumHeight(container.sizeHint().height() + 8)
+        return scroll
 
-        box_quick_access_outer.addWidget(quick_access_scroll)
-        root.addWidget(box_quick_access)
+    def _build_quick_items_tab(self) -> None:
+        outer = QVBoxLayout(self.quick_items_tab)
 
-        box_position = QGroupBox("(3) Quick Access Position")
+        lead = QLabel("Choose the items you want to access quickly from the right-click menu.")
+        lead.setWordWrap(True)
+        outer.addWidget(lead)
+
+        sub_tabs = QTabWidget()
+        core_items_tab = QWidget()
+        insert_tab = QWidget()
+        special_chars_tab = QWidget()
+
+        sub_tabs.addTab(core_items_tab, "Core Items")
+        sub_tabs.addTab(insert_tab, "Insert")
+        sub_tabs.addTab(special_chars_tab, "Special Characters")
+        outer.addWidget(sub_tabs)
+
+        core_layout = QVBoxLayout(core_items_tab)
+        core_layout.addWidget(self._build_group_scroll_area(CORE_QUICK_ACCESS_GROUPS))
+
+        insert_layout = QVBoxLayout(insert_tab)
+        insert_layout.addWidget(self._build_group_scroll_area(INSERT_QUICK_ACCESS_GROUPS))
+
+        special_layout = QVBoxLayout(special_chars_tab)
+        special_layout.addWidget(self._build_group_scroll_area(SPECIAL_CHARACTER_QUICK_ACCESS_GROUPS))
+
+        box_position = QGroupBox("Quick Items Position")
         box_position_layout = QVBoxLayout(box_position)
 
         self.quick_access_position_checkbox = QCheckBox(
-            "Display the Quick Access items on the first level of the context menu"
+            "Show the selected Quick Items at the top level of the right-click menu"
         )
         self.quick_access_position_checkbox.setChecked(self.config.get("quick_access_position", False))
         box_position_layout.addWidget(self.quick_access_position_checkbox)
 
-        root.addWidget(box_position)
-        root.addStretch(1)
+        outer.addWidget(box_position)
+        outer.addStretch(1)
 
     def _build_user_words_tab(self) -> None:
         outer = QVBoxLayout(self.user_words_tab)
@@ -185,8 +210,8 @@ class ConfigDialog(QDialog):
 
         root = QVBoxLayout(content)
 
-        self.words_checkbox = QCheckBox("Show 'User Words' (the added words below) in the context menu")
-        self.words_checkbox.setChecked(self.config.get("user_words_flag", False))
+        self.words_checkbox = QCheckBox("Show 'User Words' in the context menu (using the words listed below)")
+        self.words_checkbox.setChecked(self.config.get("user_words_flag", True))
         root.addWidget(self.words_checkbox)
 
         button_row_1 = QHBoxLayout()
@@ -220,7 +245,7 @@ class ConfigDialog(QDialog):
         root.addLayout(button_row_3)
 
         self.words_position_checkbox = QCheckBox(
-            "Display the added words on the first level of the context menu"
+            "Show the added words at the top level of the right-click menu"
         )
         self.words_position_checkbox.setChecked(self.config.get("user_words_position", False))
         root.addWidget(self.words_position_checkbox)

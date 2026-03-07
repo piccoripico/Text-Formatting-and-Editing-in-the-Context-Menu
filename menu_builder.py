@@ -5,7 +5,7 @@ from aqt.webview import AnkiWebView
 
 from .actions import dispatch_spec, dispatch_user_word
 from .config_store import load_config
-from .menu_spec import COMMANDS, LABEL_TO_SPEC, CommandSpec, STYLE_PRESET_SECTIONS
+from .menu_spec import COMMANDS, CommandSpec, STYLE_PRESET_SECTIONS
 
 
 def _add_action(menu: QMenu, label: str, callback) -> None:
@@ -19,9 +19,9 @@ def _specs_for_context(context_name: str) -> list[CommandSpec]:
 
 
 def _spec_by_label_for_context(context_name: str, label: str) -> CommandSpec | None:
-    spec = LABEL_TO_SPEC.get(label)
-    if spec and context_name in spec.contexts:
-        return spec
+    for spec in COMMANDS:
+        if spec.label == label and context_name in spec.contexts:
+            return spec
     return None
 
 
@@ -33,18 +33,40 @@ def _add_spec_action(menu: QMenu, web: AnkiWebView, spec: CommandSpec, context_n
     )
 
 
-def _submenu_specs(context_name: str, category: str, submenu: str | None = None) -> list[CommandSpec]:
+def _submenu_specs(context_name: str, category: str, submenu_path: tuple[str, ...] = ()) -> list[CommandSpec]:
     specs = _specs_for_context(context_name)
-    return [spec for spec in specs if spec.category == category and spec.submenu == submenu]
+    return [spec for spec in specs if spec.category == category and spec.submenu_path == submenu_path]
+
+
+def _category_specs(context_name: str, category: str) -> list[CommandSpec]:
+    specs = _specs_for_context(context_name)
+    return [spec for spec in specs if spec.category == category]
 
 
 def _quick_access_specs(config: dict, context_name: str) -> list[CommandSpec]:
     specs: list[CommandSpec] = []
+    seen_labels: set[str] = set()
     for label in config.get("selected_quick_access_items", []):
         spec = _spec_by_label_for_context(context_name, label)
-        if spec and spec.quick_access_allowed:
+        if spec and spec.quick_access_allowed and spec.label not in seen_labels:
             specs.append(spec)
+            seen_labels.add(spec.label)
     return specs
+
+
+def _get_or_create_submenu(parent: QMenu, title: str) -> QMenu:
+    for action in parent.actions():
+        submenu = action.menu()
+        if submenu and submenu.title() == title:
+            return submenu
+    return parent.addMenu(title)
+
+
+def _add_spec_into_menu_tree(parent: QMenu, spec: CommandSpec, web: AnkiWebView, context_name: str) -> None:
+    current_menu = parent
+    for title in spec.submenu_path:
+        current_menu = _get_or_create_submenu(current_menu, title)
+    _add_spec_action(current_menu, web, spec, context_name)
 
 
 def _add_user_words_first_level(config: dict, parent_menu: QMenu, web: AnkiWebView, context_name: str) -> bool:
@@ -101,7 +123,7 @@ def build_context_menu(parent_menu: QMenu, context_name: str, web: AnkiWebView) 
     if _add_user_words_first_level(config, parent_menu, web, context_name):
         parent_menu.addSeparator()
 
-    root_menu = parent_menu.addMenu("Format / Edit")
+    root_menu = parent_menu.addMenu("Text Tools")
 
     if (not quick_access_on_first_level) and quick_specs:
         for spec in quick_specs:
@@ -110,6 +132,17 @@ def build_context_menu(parent_menu: QMenu, context_name: str, web: AnkiWebView) 
 
     if _add_user_words_submenu(config, root_menu, web, context_name):
         root_menu.addSeparator()
+
+    style_presets_menu = root_menu.addMenu("Style Presets")
+    for section_index, section in enumerate(STYLE_PRESET_SECTIONS):
+        if section_index > 0:
+            style_presets_menu.addSeparator()
+        for label in section:
+            spec = _spec_by_label_for_context(context_name, label)
+            if spec:
+                _add_spec_action(style_presets_menu, web, spec, context_name)
+
+    root_menu.addSeparator()
 
     text_styling_menu = root_menu.addMenu("Text Styling")
     for spec in _submenu_specs(context_name, "text_styling"):
@@ -127,15 +160,6 @@ def build_context_menu(parent_menu: QMenu, context_name: str, web: AnkiWebView) 
     if font_spec:
         _add_spec_action(root_menu, web, font_spec, context_name)
 
-    style_presets_menu = root_menu.addMenu("Style Presets")
-    for section_index, section in enumerate(STYLE_PRESET_SECTIONS):
-        if section_index > 0:
-            style_presets_menu.addSeparator()
-        for label in section:
-            spec = _spec_by_label_for_context(context_name, label)
-            if spec:
-                _add_spec_action(style_presets_menu, web, spec, context_name)
-
     root_menu.addSeparator()
 
     alignment_menu = root_menu.addMenu("Alignment / List")
@@ -147,23 +171,8 @@ def build_context_menu(parent_menu: QMenu, context_name: str, web: AnkiWebView) 
         _add_spec_action(root_menu, web, word_count_spec, context_name)
 
     insert_menu = root_menu.addMenu("Insert")
-
-    for label in ["Insert Link", "Insert Image", "Insert Blockquote"]:
-        spec = _spec_by_label_for_context(context_name, label)
-        if spec:
-            _add_spec_action(insert_menu, web, spec, context_name)
-
-    date_time_menu = insert_menu.addMenu("Insert Date and Time")
-    for spec in _submenu_specs(context_name, "insert", "Insert Date and Time"):
-        _add_spec_action(date_time_menu, web, spec, context_name)
-
-    horizontal_rule_spec = _spec_by_label_for_context(context_name, "Insert Horizontal Line")
-    if horizontal_rule_spec:
-        _add_spec_action(insert_menu, web, horizontal_rule_spec, context_name)
-
-    special_characters_menu = insert_menu.addMenu("Insert Special Characters")
-    for spec in _submenu_specs(context_name, "insert", "Insert Special Characters"):
-        _add_spec_action(special_characters_menu, web, spec, context_name)
+    for spec in _category_specs(context_name, "insert"):
+        _add_spec_into_menu_tree(insert_menu, spec, web, context_name)
 
     root_menu.addSeparator()
 

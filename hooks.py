@@ -8,10 +8,10 @@ from .config_store import load_config
 from .menu_builder import build_context_menu
 
 
-def _menu_has_format_edit(menu) -> bool:
+def _menu_has_text_tools(menu) -> bool:
     for action in menu.actions():
         try:
-            if action.text() == "Format / Edit":
+            if action.text() == "Text Tools":
                 return True
         except Exception:
             continue
@@ -20,13 +20,13 @@ def _menu_has_format_edit(menu) -> bool:
 
 def _on_editor_context_menu(editor_webview: EditorWebView, menu) -> None:
     config = load_config()
-    if config["editor"]["enabled"] and not _menu_has_format_edit(menu):
+    if config["editor"]["enabled"] and not _menu_has_text_tools(menu):
         build_context_menu(menu, "editor", editor_webview)
 
 
 def _on_reviewer_context_menu(reviewer: Reviewer, menu) -> None:
     config = load_config()
-    if config["reviewer"]["enabled"] and not _menu_has_format_edit(menu):
+    if config["reviewer"]["enabled"] and not _menu_has_text_tools(menu):
         build_context_menu(menu, "reviewer", reviewer.web)
 
 
@@ -38,7 +38,7 @@ def _on_webview_context_menu(webview, menu) -> None:
     if getattr(mw, "state", None) != "review":
         return
 
-    if _menu_has_format_edit(menu):
+    if _menu_has_text_tools(menu):
         return
 
     build_context_menu(menu, "reviewer", webview)

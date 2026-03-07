@@ -16,7 +16,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "reviewer": {"enabled": True},
     "selected_quick_access_items": [],
     "quick_access_position": False,
-    "user_words_flag": False,
+    "user_words_flag": True,
     "user_words": [],
     "user_words_position": False,
 }
@@ -38,6 +38,9 @@ LEGACY_QUICK_ACCESS_LABEL_ALIASES: dict[str, str] = {
     "Size 5": "X-Large",
     "Size 6": "XX-Large",
     "Size 7": "XXX-Large",
+    "Ruby": "Insert Ruby",
+    "Insert Blockquote": "Blockquote",
+    "Insert Horizontal Line": "Horizontal Line",
 }
 
 
@@ -99,7 +102,7 @@ def normalize_config(config: dict[str, Any]) -> dict[str, Any]:
     )
 
     config["quick_access_position"] = bool(config.get("quick_access_position", False))
-    config["user_words_flag"] = bool(config.get("user_words_flag", False))
+    config["user_words_flag"] = bool(config.get("user_words_flag", True))
 
     user_words = config.get("user_words", [])
     if not isinstance(user_words, list):

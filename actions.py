@@ -7,7 +7,15 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import urlparse
 
-from aqt.qt import QApplication, QFontDialog, QInputDialog
+from aqt.qt import (
+    QApplication,
+    QDialog,
+    QDialogButtonBox,
+    QFontDialog,
+    QFormLayout,
+    QInputDialog,
+    QLineEdit,
+)
 from aqt.utils import showInfo
 from aqt.webview import AnkiWebView
 
@@ -24,7 +32,6 @@ STYLE_WORD_TO_EDITOR_SIZE = {
     "xxx-large": 7,
 }
 
-
 WRAP_TAG_TO_EDITOR_COMMAND = {
     "b": "bold",
     "i": "italic",
@@ -34,13 +41,27 @@ WRAP_TAG_TO_EDITOR_COMMAND = {
     "sub": "subscript",
 }
 
-
 BLOCK_ALIGN_TO_EDITOR_COMMAND = {
     "left": "justifyLeft",
     "center": "justifyCenter",
     "right": "justifyRight",
     "justify": "justifyFull",
 }
+
+try:
+    RUBY_OK_BUTTON = QDialogButtonBox.StandardButton.Ok
+    RUBY_CANCEL_BUTTON = QDialogButtonBox.StandardButton.Cancel
+    RUBY_DIALOG_ACCEPTED = QDialog.DialogCode.Accepted
+
+    def exec_dialog(dialog: QDialog) -> int:
+        return dialog.exec()
+except AttributeError:
+    RUBY_OK_BUTTON = QDialogButtonBox.Ok
+    RUBY_CANCEL_BUTTON = QDialogButtonBox.Cancel
+    RUBY_DIALOG_ACCEPTED = QDialog.Accepted
+
+    def exec_dialog(dialog: QDialog) -> int:
+        return dialog.exec_()
 
 
 def _run_js(
@@ -173,6 +194,58 @@ def _apply_style_editor_native(web: AnkiWebView, style: dict[str, Any]) -> None:
         _editor_set_format(web, "fontname", style["fontFamily"])
 
 
+def _generate_table_html(rows: int, cols: int, with_header: bool) -> str:
+    lines: list[str] = ['<table border="1" cellspacing="0" cellpadding="4"><tbody>']
+
+    for r in range(rows):
+        lines.append("<tr>")
+        for _c in range(cols):
+            if with_header and r == 0:
+                lines.append("<th>&nbsp;</th>")
+            else:
+                lines.append("<td>&nbsp;</td>")
+        lines.append("</tr>")
+
+    lines.append("</tbody></table>")
+    return "".join(lines)
+
+
+def _prompt_ruby_html() -> str | None:
+    dialog = QDialog()
+    dialog.setWindowTitle("Insert Ruby")
+    dialog.resize(560, 190)
+
+    layout = QFormLayout(dialog)
+
+    reading_edit = QLineEdit()
+    base_edit = QLineEdit()
+    reading_edit.setMinimumWidth(420)
+    base_edit.setMinimumWidth(420)
+
+    reading_edit.setPlaceholderText("Reading")
+    base_edit.setPlaceholderText("Base text")
+
+    layout.addRow("Reading (displayed above):", reading_edit)
+    layout.addRow("Base text (displayed below):", base_edit)
+
+    button_box = QDialogButtonBox(RUBY_OK_BUTTON | RUBY_CANCEL_BUTTON)
+    layout.addRow(button_box)
+
+    button_box.accepted.connect(dialog.accept)
+    button_box.rejected.connect(dialog.reject)
+
+    if exec_dialog(dialog) != RUBY_DIALOG_ACCEPTED:
+        return None
+
+    reading = reading_edit.text().strip()
+    base = base_edit.text().strip()
+
+    if not reading or not base:
+        return None
+
+    return f"<ruby>{html.escape(base)}<rt>{html.escape(reading)}</rt></ruby>"
+
+
 def _dispatch_editor_native(web: AnkiWebView, spec: CommandSpec) -> bool:
     action = spec.action
 
@@ -186,6 +259,19 @@ def _dispatch_editor_native(web: AnkiWebView, spec: CommandSpec) -> bool:
 
     if action == "insert_datetime":
         _insert_text_editor_native(web, datetime.now().strftime(str(spec.arg)))
+        return True
+
+    if action == "insert_table":
+        rows = int((spec.arg or {}).get("rows", 1))
+        cols = int((spec.arg or {}).get("cols", 1))
+        with_header = bool((spec.arg or {}).get("with_header", False))
+        _insert_html_editor_native(web, _generate_table_html(rows, cols, with_header))
+        return True
+
+    if action == "insert_ruby_prompt":
+        ruby_html = _prompt_ruby_html()
+        if ruby_html:
+            _insert_html_editor_native(web, ruby_html)
         return True
 
     if action == "insert_link_prompt":
@@ -323,6 +409,19 @@ def dispatch_spec(web: AnkiWebView, spec: CommandSpec, context_name: str) -> Non
 
     if action == "insert_datetime":
         _run_js(web, {"op": "insertText", "text": datetime.now().strftime(str(spec.arg))})
+        return
+
+    if action == "insert_table":
+        rows = int((spec.arg or {}).get("rows", 1))
+        cols = int((spec.arg or {}).get("cols", 1))
+        with_header = bool((spec.arg or {}).get("with_header", False))
+        _run_js(web, {"op": "insertHTML", "html": _generate_table_html(rows, cols, with_header)})
+        return
+
+    if action == "insert_ruby_prompt":
+        ruby_html = _prompt_ruby_html()
+        if ruby_html:
+            _run_js(web, {"op": "insertHTML", "html": ruby_html})
         return
 
     if action == "font_dialog":
