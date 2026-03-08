@@ -3,7 +3,7 @@
 An Anki add-on that adds a **Text Tools** menu to the editor **right-click menu**, providing quick access to common formatting, insertion, and editing commands.
 
 - Available on AnkiWeb: https://ankiweb.net/shared/info/2143302836
-- GitHub repository: https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu
+- [GitHub repository](https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu)
 - [Japanese README (日本語)](https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu/blob/385aa883941ea5e5c79d624829290a7d6596aa18/docs/README_ja.md)
 
 ![Screenshot: editor right-click menu](https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu/blob/385aa883941ea5e5c79d624829290a7d6596aa18/docs/Screenshot_right-click_menu.png)
