@@ -50,9 +50,9 @@ STYLE_PRESET_LABELS = [
     "Blue Emphasis (Bold + Blue)",
     "Green Emphasis (Bold + Green)",
     "Marked Attention (Bold + Magenta)",
-    "Heading Large (Bold + Size 5)",
-    "Large Emphasis (Bold + Red + Size 5)",
-    "Side Note (Cyan + Size 2)",
+    "Heading Large (Bold + x-large)",
+    "Large Emphasis (Bold + Red + xx-large)",
+    "Side Note (Cyan + small)",
 ]
 
 CORE_QUICK_ACCESS_GROUPS: list[tuple[str, list[str]]] = [
@@ -91,6 +91,19 @@ CORE_QUICK_ACCESS_GROUPS: list[tuple[str, list[str]]] = [
             "Outdent",
             "Insert Unordered List",
             "Insert Ordered List",
+        ],
+    ),
+    (
+        "Edit",
+        [
+            "Cut",
+            "Copy",
+            "Paste",
+            "Paste Plain Text",
+            "Remove Link",
+            "Select All",
+            "Undo",
+            "Redo",
         ],
     ),
     ("Clear Formatting", ["Clear All Formatting"]),
@@ -317,7 +330,7 @@ COMMANDS: list[CommandSpec] = [
     ),
     cmd(
         "preset_heading_large",
-        "Heading Large (Bold + Size 5)",
+        "Heading Large (Bold + x-large)",
         "apply_style",
         {"fontWeight": "bold", "fontSize": "x-large"},
         category="style_presets",
@@ -325,15 +338,15 @@ COMMANDS: list[CommandSpec] = [
     ),
     cmd(
         "preset_large_emphasis",
-        "Large Emphasis (Bold + Red + Size 5)",
+        "Large Emphasis (Bold + Red + xx-large)",
         "apply_style",
-        {"fontWeight": "bold", "color": "red", "fontSize": "x-large"},
+        {"fontWeight": "bold", "color": "red", "fontSize": "xx-large"},
         category="style_presets",
         quick_access_allowed=True,
     ),
     cmd(
         "preset_side_note",
-        "Side Note (Cyan + Size 2)",
+        "Side Note (Cyan + small)",
         "apply_style",
         {"color": "cyan", "fontSize": "small"},
         category="style_presets",
@@ -436,14 +449,14 @@ COMMANDS: list[CommandSpec] = [
     ),
 
     # Edit
-    cmd("cut", "Cut", "cut", category="edit"),
-    cmd("copy", "Copy", "copy", category="edit"),
-    cmd("paste", "Paste", "paste", category="edit"),
-    cmd("paste_plain_text", "Paste Plain Text", "paste_plain_text", category="edit"),
-    cmd("remove_link", "Remove Link", "remove_link", category="edit"),
-    cmd("select_all", "Select All", "select_all", category="edit"),
-    cmd("undo", "Undo", "undo", category="edit"),
-    cmd("redo", "Redo", "redo", category="edit"),
+    cmd("cut", "Cut", "cut", category="edit", quick_access_allowed=True),
+    cmd("copy", "Copy", "copy", category="edit", quick_access_allowed=True),
+    cmd("paste", "Paste", "paste", category="edit", quick_access_allowed=True),
+    cmd("paste_plain_text", "Paste Plain Text", "paste_plain_text", category="edit", quick_access_allowed=True),
+    cmd("remove_link", "Remove Link", "remove_link", category="edit", quick_access_allowed=True),
+    cmd("select_all", "Select All", "select_all", category="edit", quick_access_allowed=True),
+    cmd("undo", "Undo", "undo", category="edit", quick_access_allowed=True),
+    cmd("redo", "Redo", "redo", category="edit", quick_access_allowed=True),
 
     # Clear
     cmd("clear_format", "Clear All Formatting", "clear_format", category="clear_format", quick_access_allowed=True),
@@ -499,8 +512,8 @@ STYLE_PRESET_SECTIONS: list[list[str]] = [
         "Marked Attention (Bold + Magenta)",
     ],
     [
-        "Heading Large (Bold + Size 5)",
-        "Large Emphasis (Bold + Red + Size 5)",
-        "Side Note (Cyan + Size 2)",
+        "Heading Large (Bold + x-large)",
+        "Large Emphasis (Bold + Red + xx-large)",
+        "Side Note (Cyan + small)",
     ],
 ]

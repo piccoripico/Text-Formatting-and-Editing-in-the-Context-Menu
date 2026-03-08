@@ -213,14 +213,11 @@ def _generate_table_html(rows: int, cols: int, with_header: bool) -> str:
 def _prompt_ruby_html() -> str | None:
     dialog = QDialog()
     dialog.setWindowTitle("Insert Ruby")
-    dialog.resize(560, 190)
 
     layout = QFormLayout(dialog)
 
     reading_edit = QLineEdit()
     base_edit = QLineEdit()
-    reading_edit.setMinimumWidth(420)
-    base_edit.setMinimumWidth(420)
 
     reading_edit.setPlaceholderText("Reading")
     base_edit.setPlaceholderText("Base text")
@@ -233,6 +230,10 @@ def _prompt_ruby_html() -> str | None:
 
     button_box.accepted.connect(dialog.accept)
     button_box.rejected.connect(dialog.reject)
+
+    dialog.setMinimumWidth(560)
+    dialog.adjustSize()
+    dialog.resize(560, dialog.sizeHint().height())
 
     if exec_dialog(dialog) != RUBY_DIALOG_ACCEPTED:
         return None

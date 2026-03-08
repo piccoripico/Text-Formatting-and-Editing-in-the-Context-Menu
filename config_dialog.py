@@ -70,7 +70,7 @@ def open_config_dialog() -> None:
 class ConfigDialog(QDialog):
     def __init__(self, parent) -> None:
         super().__init__(parent)
-        self.setWindowTitle("Context Menu Text Tools - Config")
+        self.setWindowTitle("Text Tools in Right-Click Menu - Config")
         self.resize(1080, 760)
 
         self.config = load_config()
@@ -108,12 +108,12 @@ class ConfigDialog(QDialog):
 
         root = QVBoxLayout(content)
 
-        self.editor_checkbox = QCheckBox("Show 'Text Tools' in the editor context menu")
+        self.editor_checkbox = QCheckBox("Show 'Text Tools' in the editor right-click menu")
         self.editor_checkbox.setChecked(self.config.get("editor", {}).get("enabled", True))
         root.addWidget(self.editor_checkbox)
 
         self.reviewer_checkbox = QCheckBox(
-            "Show 'Text Tools' in the reviewer context menu "
+            "Show 'Text Tools' in the reviewer right-click menu "
             "(Most features are available when the 'Edit Field During Review (Cloze)' add-on is installed.)"
         )
         self.reviewer_checkbox.setChecked(self.config.get("reviewer", {}).get("enabled", True))
@@ -210,7 +210,11 @@ class ConfigDialog(QDialog):
 
         root = QVBoxLayout(content)
 
-        self.words_checkbox = QCheckBox("Show 'User Words' in the context menu (using the words listed below)")
+        note = QLabel("This menu appears only when one or more words are registered.")
+        note.setWordWrap(True)
+        root.addWidget(note)
+
+        self.words_checkbox = QCheckBox("Show 'User Words' in the right-click menu (using the words listed below)")
         self.words_checkbox.setChecked(self.config.get("user_words_flag", True))
         root.addWidget(self.words_checkbox)
 
