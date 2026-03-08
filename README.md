@@ -6,7 +6,7 @@ An Anki add-on that adds a **Text Tools** menu to the editor **right-click menu*
 - [GitHub repository](https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu)
 - [Japanese README (日本語)](https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu/blob/main/docs/README_ja.md)
 
-![Screenshot: editor right-click menu](https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu/main/docs/Screenshot_right-click_menu.png)
+![Screenshot: editor right-click menu](https://raw.githubusercontent.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu/main/docs/Screenshot_right-click_menu.png)
 
 ## Features
 
@@ -48,7 +48,7 @@ The configuration window has three tabs:
 - **Quick Items** — choose frequently used items and optionally display them at the top level of the right-click menu
 - **User Words** — add, edit, remove, reorder, import, or export your own words and optionally display them at the top level of the right-click menu
 
-![Screenshot: config window](https://github.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu/main/docs/Screenshot_config.png)
+![Screenshot: config window](https://raw.githubusercontent.com/piccoripico/Text-Formatting-and-Editing-in-the-Context-Menu/main/docs/Screenshot_config.png)
 
 ## Changelog
 
